@@ -200,13 +200,17 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
-def get_assignment():
+def get_assignment(percent):
 	w = read_list_file(workfile)
 	if w == "locked":
 		return "locked"
 
 	tasks = greplike(workpattern, w)
-	num_to_get = num_to_fetch(tasks, int(options.num_cache))
+	num_cache = int(options.num_cache)
+	if percent is not None and percent >= int(options.percent_limit):
+		num_cache += 1
+		debug_print("Progress of current assignment is {} and bigger than limit ({}), so num_cache is increased by one to {}".format(percent, options.percent_limit, num_cache))
+	num_to_get = num_to_fetch(tasks, num_cache)
 
 	if num_to_get < 1:
 		debug_print(workfile + " already has >= " + str(len(tasks)) + " entries, not getting new work")
@@ -238,7 +242,7 @@ def update_progress():
 		# debug_print("update_progress: assignment_id = " + assignment_id)
 	else:
 		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + tasks[0])
-		return []
+		return
 	found = re.search(',(.+?),', tasks[0])
 	if found:
 		p = found.group(1)
@@ -250,15 +254,18 @@ def update_progress():
 		if found:
 			iter = found.group(1)
 			# debug_print("Iteration = " + iter)
-			percent = str(100*float(iter)/float(p))
-			percent = percent[0:4]
+			percent = 100*float(iter)/float(p)
+			percent_s = str(percent)[0:4]
 			# debug_print("% done = " + percent)
+			print("Iteration = {}, % done = {}".format(iter, percent))
+			sys.stdout.flush()
 		else:
 			debug_print("update_progress: Unable to find .stat file corresponding to first entry in " + workfile + ": " + tasks[0])
-			return []
+			return
 	else:
 		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + tasks[0])
-		return []
+		return
+	return percent
 	# Found eligible current-assignment in workfile and a matching p*.stat file with last-entry containing "Iteration = ":
 	mach_id = ""
 	# debug_print("len(mach_id) = " + str(len(mach_id)))
@@ -275,7 +282,7 @@ def update_progress():
 	# debug_print("len(mach_id) = " + str(len(mach_id)))
 	if len(mach_id) == 0:
 		debug_print("update_progress: Unable to extract valid mach_id entry from " + localfile)
-		return []
+		return
 
 	# Assignment Progress fields:
 	# g= the machine's GUID (32 chars, assigned by Primenet on 1st-contact from a given machine, stored in 'mach_id = ' entry of local.ini file of rundir)
@@ -297,14 +304,14 @@ def update_progress():
 			found = re.search('SUCCESS', page[i])
 			if found:
 				# debug_print("Current-assignment [p = " + p + "] update_progress was successful.")
-				return []
+				return
 		# debug_print("Current-assignment [p = " + p + "] update_progress may have failed; return value:")
 		# for i in range(len(page)):
 		#	debug_print("line[" + str(i) + "] = " + page[i])
 	except URLError:
 		debug_print("update_progress: URL open error")
 
-	return []
+	return
 
 def submit_work():
 	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
@@ -374,6 +381,7 @@ parser.add_option("-w", "--workdir", dest="workdir", default=".", help="Working 
 parser.add_option("-T", "--worktype", dest="worktype", default="101", help="Worktype code, default %(default)s for double-check LL, alternatively 100 (smallest available first-time LL), 102 (world-record-sized first-time LL), 104 (100M digit number to LL test - not recommended), 150 (smallest available first-time PRP), 151 (double-check PRP), 152 (world-record-sized first-time PRP), 153 (100M digit number to PRP test - not recommended)")
 
 parser.add_option("-n", "--num_cache", dest="num_cache", default="2", help="Number of assignments to cache, default 2")
+parser.add_option("-L", "--percent-limit", dest="percent_limit", default="99", help="Add one to num_cache when current assignment is already done at this percentage, default 99")
 
 parser.add_option("-t", "--timeout", dest="timeout", default="21600", help="Seconds to wait between network updates, default 21600 [6 hours]. Use 0 for a single update without looping.")
 
@@ -445,6 +453,7 @@ primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
 while True:
 	# Log in to primenet
+	percent = None
 	try:
 		login_data = {"user_login": options.username,
 			"user_password": options.password,
@@ -462,9 +471,11 @@ while True:
 			debug_print("Login failed.")
 		else:
 			primenet_login = True
-			#while update_progress() == "locked":
-			#	debug_print("Waiting for workfile access...")
-			#	sleep(2)
+			while True:
+				percent = update_progress()
+				if percent != "locked": break
+				debug_print("Waiting for workfile access...")
+				sleep(2)
 			while submit_work() == "locked":
 				debug_print("Waiting for results file access...")
 				sleep(2)
@@ -472,7 +483,7 @@ while True:
 		debug_print("Primenet URL open error")
 
 	if primenet_login:
-		while get_assignment() == "locked":
+		while get_assignment(percent) == "locked":
 			debug_print("Waiting for worktodo.ini access...")
 			sleep(2)
 	if timeout <= 0:
