@@ -56,8 +56,8 @@ except ImportError:
     from urllib2 import build_opener
     from urllib2 import HTTPCookieProcessor
 
-primenet_v5_burl = b"http://v5.mersenne.org/v5server/?v=0.95&px=GIMPS"
-primenet_baseurl = b"https://www.mersenne.org/"
+primenet_v5_burl = "http://v5.mersenne.org/v5server/?v=0.95&px=GIMPS"
+primenet_baseurl = "https://www.mersenne.org/"
 primenet_login = False
 
 def ass_generate(assignment):
@@ -75,7 +75,7 @@ def debug_print(text):
 def greplike(pattern, l):
 	output = []
 	for line in l:
-		s = re.search(r"(" + pattern + ")$", line)
+		s = re.search(b"(" + pattern + b")$", line)
 		if s:
 			output.append(s.groups()[0])
 	return output
@@ -103,10 +103,10 @@ def read_list_file(filename):
 		fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
 		os.close(fd)
 		if os.path.exists(filename):
-			File = open(filename, "r")
+			File = open(filename, "rb")
 			contents = File.readlines()
 			File.close()
-			return map(lambda x: x.rstrip(), contents)
+			return [ x.rstrip() for x in contents ]
 		else:
 			return []
 	# This python2-style exception decl gives a syntax error in python3:
@@ -120,14 +120,14 @@ def read_list_file(filename):
 		else:
 			raise
 
-def write_list_file(filename, l, mode="w"):
+def write_list_file(filename, l, mode="wb"):
 	# Assume we put the lock in upon reading the file, so we can
 	# safely write the file and remove the lock
 	lockfile = filename + ".lck"
 	# A "null append" is meaningful, as we can call this to clear the
 	# lockfile. In this case the main file need not be touched.
-	if mode != "a" or len(l) > 0:
-		content = "\n".join(l) + "\n"
+	if not ( "a" in mode and len(l) == 0):
+		content = b"\n".join(l) + b"\n"
 		File = open(filename, mode)
 		File.write(content)
 		File.close()
@@ -193,7 +193,7 @@ def primenet_fetch(num_to_get):
 	}
 	try:
 		openurl = primenet_baseurl + "manual_assignment/?" + ass_generate(assignment) + "B1=Get+Assignments"
-		# debug_print("Fetching work via URL = "+openurl)
+		debug_print("Fetching work via URL = "+openurl)
 		r = primenet.open(openurl)
 		return greplike(workpattern, r.readlines())
 	except URLError:
@@ -221,22 +221,22 @@ def get_assignment(percent):
 		new_tasks = primenet_fetch(num_to_get)
 
 	num_fetched = len(new_tasks)
-	# debug_print("Fetched " + str() + " new_tasks: " + str(new_tasks))
-	write_list_file(workfile, new_tasks, "a")
+	debug_print("Fetched " + str(num_fetched) + " new_tasks: " + str(new_tasks))
+	write_list_file(workfile, new_tasks, "ab")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
 
 def mersenne_find(line, complete=True):
 	# Pre-v19 old-style HRF-formatted result used "Program:..."; starting w/v19 JSON-formatted result uses "program",
 	# so take the intersection of those to regexp strings:
-	return re.search(r"rogram", line)
+	return re.search(b"rogram", line)
 
 def update_progress():
 	w = read_list_file(workfile)
 	unlock_file(workfile)
 
 	tasks = greplike(workpattern, w)
-	found = re.search('=(.+?),', tasks[0])
+	found = re.search(b'=(.+?),', tasks[0])
 	if found:
 		assignment_id = found.group(1)
 		# debug_print("update_progress: assignment_id = " + assignment_id)
@@ -250,7 +250,7 @@ def update_progress():
 		w = read_list_file(statfile)
 		unlock_file(statfile)
 		# Extract iteration from most-recent statfile entry:
-		found = re.search('= (.+?) ', w[len(w)-1])
+		found = re.search(b"= (.+?) ", w[len(w)-1])
 		if found:
 			iter = found.group(1)
 			# debug_print("Iteration = " + iter)
@@ -273,7 +273,7 @@ def update_progress():
 	unlock_file(localfile)
 	# debug_print("len(localfile) = " + str(len(w)))
 	for i in range(len(w)):
-		found = re.search('mach_id', w[i])
+		found = re.search(b'mach_id', w[i])
 		if found:
 			j = len(w[i])
 			# Assume primenet-assigned guid is 32 chars, at end of line:
@@ -316,7 +316,7 @@ def update_progress():
 def submit_work():
 	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
 	files = [resultsfile, sentfile]
-	rs = map(read_list_file, files)
+	rs = [ read_list_file(f) for f in files ]
 	#
 	# EWM: Mark Rose comments:
 	# This code is calling the read_list_file function for every item in the files list. It's putting the
@@ -330,8 +330,8 @@ def submit_work():
 		# Remove the lock in case one of these was unlocked at start
 		for i in range(len(files)):
 			if rs[i] != "locked":
-				debug_print("Calling write_list_file() for" + files[i])
-				write_list_file(files[i], [], "a")
+				debug_print("unlock_file() for" + files[i])
+				unlock_file(files[i])
 		return "locked"
 
 	results = rs[0]
@@ -349,23 +349,24 @@ def submit_work():
 	else:
 		# EWM: Switch to one-result-line-at-a-time submission to support error-message-on-submit handling:
 		for sendline in results_send:
+			sendline = sendline.decode('ascii')
 			debug_print("Submitting\n" + sendline)
 			try:
-				post_data = urlencode({"data": sendline})
+				post_data = urlencode({"data": sendline}).encode('ascii')
 				r = primenet.open(primenet_baseurl + "manual_result/default.php", post_data)
 				res = r.read()
-				if "Error" in res:
-					ibeg = res.find("Error")
-					iend = res.find("</div>", ibeg)
-					print("Submission failed: '" + res[ibeg:iend] + "'")
-				elif "Accepted" in res:
+				if b"Error" in res:
+					ibeg = res.find(b"Error")
+					iend = res.find(b"</div>", ibeg)
+					print("Submission failed: '{}'".format(res[ibeg:iend]))
+				elif b"Accepted" in res:
 					sent += sendline
 				else:
 					print("Submission of results line '" + sendline + "' failed for reasons unknown - please try manual resubmission.")
 			except URLError:
 				debug_print("URL open error")
 
-	write_list_file(sentfile, results_send, "a")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
+	write_list_file(sentfile, results_send, "ab")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
 													# bad results (e.g. previously-submitted duplicates) every time the script executes.
 	unlock_file(resultsfile)	# EWM: don't write anything to resultsfile, but still need to remove lock placed on it by read_list_file
 
@@ -442,7 +443,7 @@ sentfile = os.path.join(workdir, "results_sent.txt")
 # also now to specifically look for a 32-hexchar assignment ID preceding such a triplet, and to allow whitespace around
 # the =. The latter bit is not  needed based on current server assignment format, just a personal aesthetic bias of mine:
 #
-workpattern = r"(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
+workpattern = b"(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
 
 # mersenne.org limit is about 4 KB; stay on the safe side
 sendlimit = 3000
@@ -460,13 +461,9 @@ while True:
 		}
 
 		# This makes a POST instead of GET
-		try:
-			data = login_data.encode('ascii')	# More python3 hackage to properly encode text data as bytes
-		except AttributeError:
-			data = urlencode(login_data)
-
-		r = primenet.open(primenet_baseurl + b"default.php", data)
-		if not options.username + "<br>logged in" in r.read():
+		data = urlencode(login_data).encode('ascii')
+		r = primenet.open(primenet_baseurl + "default.php", data)
+		if not (options.username + "<br>logged in").encode('ascii') in r.read():
 			primenet_login = False
 			debug_print("Login failed.")
 		else:
