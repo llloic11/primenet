@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Automatic assignment handler for Mlucas using manual testing forms at mersenne.org
 
@@ -213,7 +213,7 @@ def get_assignment(percent):
 	num_to_get = num_to_fetch(tasks, num_cache)
 
 	if num_to_get < 1:
-		debug_print(workfile + " already has >= " + str(len(tasks)) + " entries, not getting new work")
+		debug_print(workfile + " already has " + str(len(tasks)) + " >= " + str(num_cache) + " entries, not getting new work")
 		# Must write something anyway to clear the lockfile
 		new_tasks = []
 	else:
@@ -241,23 +241,24 @@ def update_progress():
 		assignment_id = found.group(1)
 		# debug_print("update_progress: assignment_id = " + assignment_id)
 	else:
-		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + tasks[0])
+		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
-	found = re.search(',(.+?),', tasks[0])
+	found = re.search(b',(.+?),', tasks[0])
 	if found:
 		p = found.group(1)
-		statfile = 'p' + p + '.stat'
+		p = int(p)
+		statfile = 'p' + str(p) + '.stat'
 		w = read_list_file(statfile)
 		unlock_file(statfile)
 		# Extract iteration from most-recent statfile entry:
 		found = re.search(b"= (.+?) ", w[len(w)-1])
 		if found:
-			iter = found.group(1)
+			iteration = found.group(1).decode('ascii')
 			# debug_print("Iteration = " + iter)
-			percent = 100*float(iter)/float(p)
+			percent = 100*float(iteration)/float(p)
 			percent_s = str(percent)[0:4]
 			# debug_print("% done = " + percent)
-			print("Iteration = {}, % done = {}".format(iter, percent))
+			print("Iteration = {}, % done = {}".format(iteration, percent))
 			sys.stdout.flush()
 		else:
 			debug_print("update_progress: Unable to find .stat file corresponding to first entry in " + workfile + ": " + tasks[0])
@@ -382,7 +383,7 @@ parser.add_option("-w", "--workdir", dest="workdir", default=".", help="Working 
 parser.add_option("-T", "--worktype", dest="worktype", default="101", help="Worktype code, default %(default)s for double-check LL, alternatively 100 (smallest available first-time LL), 102 (world-record-sized first-time LL), 104 (100M digit number to LL test - not recommended), 150 (smallest available first-time PRP), 151 (double-check PRP), 152 (world-record-sized first-time PRP), 153 (100M digit number to PRP test - not recommended)")
 
 parser.add_option("-n", "--num_cache", dest="num_cache", default="2", help="Number of assignments to cache, default 2")
-parser.add_option("-L", "--percent-limit", dest="percent_limit", default="99", help="Add one to num_cache when current assignment is already done at this percentage, default 99")
+parser.add_option("-L", "--percent_limit", dest="percent_limit", default="99", help="Add one to num_cache when current assignment is already done at this percentage, default 99")
 
 parser.add_option("-t", "--timeout", dest="timeout", default="21600", help="Seconds to wait between network updates, default 21600 [6 hours]. Use 0 for a single update without looping.")
 
