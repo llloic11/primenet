@@ -200,16 +200,24 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
-def get_assignment(percent):
+def get_assignment(progress):
 	w = read_list_file(workfile)
 	if w == "locked":
 		return "locked"
 
 	tasks = greplike(workpattern, w)
+	(percent, time_left) = None, None
+	if progress is not None and type(progress) == tuple:
+		(percent, time_left) = progress # unpack update_progress output
 	num_cache = int(options.num_cache)
 	if percent is not None and percent >= int(options.percent_limit):
 		num_cache += 1
 		debug_print("Progress of current assignment is {} and bigger than limit ({}), so num_cache is increased by one to {}".format(percent, options.percent_limit, num_cache))
+	elif time_left is not None and time_left <= max(3*int(options.timeout), 24*3600):
+		# use else if here is important,
+		# time_left and percent increase are exclusive (don't want to do += 2)
+		num_cache += 1
+		debug_print("Time_left is {} and smaller than limit ({}), so num_cache is increased by one to {}".format(time_left, max(3*int(options.timeout), 24*3600), num_cache))
 	num_to_get = num_to_fetch(tasks, num_cache)
 
 	if num_to_get < 1:
@@ -233,6 +241,8 @@ def mersenne_find(line, complete=True):
 
 def update_progress():
 	w = read_list_file(workfile)
+	if w == "locked":
+		return "locked"
 	unlock_file(workfile)
 
 	tasks = greplike(workpattern, w)
@@ -251,22 +261,30 @@ def update_progress():
 		w = read_list_file(statfile)
 		unlock_file(statfile)
 		# Extract iteration from most-recent statfile entry:
-		found = re.search(b"= (.+?) ", w[len(w)-1])
+		found = None
+		for line in reversed(w):
+			found = re.search(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter", line)
+			if found: break
 		if found:
-			iteration = found.group(1).decode('ascii')
+			iteration = int(found.group(1))
+			time_per_iter = float(found.group(2))
+			unit = found.group(3)
+			if unit == b"sec":
+				time_per_iter *= 1000
 			# debug_print("Iteration = " + iter)
 			percent = 100*float(iteration)/float(p)
-			percent_s = str(percent)[0:4]
-			# debug_print("% done = " + percent)
-			print("Iteration = {}, % done = {}".format(iteration, percent))
+			debug_print("prime = {}, iteration = {}, done = {:.2f}%, {:f} msec/iter".format(p, iteration, percent, time_per_iter))
+			iteration_left = p - iteration
+			time_left = time_per_iter * iteration_left / 1000
+			debug_print("Finish estimated in {:.1f} days".format(time_left/3600/24))
 			sys.stdout.flush()
 		else:
-			debug_print("update_progress: Unable to find .stat file corresponding to first entry in " + workfile + ": " + tasks[0])
+			debug_print("update_progress: Unable to find .stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
 			return
 	else:
-		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + tasks[0])
+		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
 		return
-	return percent
+	return percent, time_left
 	# Found eligible current-assignment in workfile and a matching p*.stat file with last-entry containing "Iteration = ":
 	mach_id = ""
 	# debug_print("len(mach_id) = " + str(len(mach_id)))
@@ -455,7 +473,6 @@ primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
 while True:
 	# Log in to primenet
-	percent = None
 	try:
 		login_data = {"user_login": options.username,
 			"user_password": options.password,
@@ -469,11 +486,6 @@ while True:
 			debug_print("Login failed.")
 		else:
 			primenet_login = True
-			while True:
-				percent = update_progress()
-				if percent != "locked": break
-				debug_print("Waiting for workfile access...")
-				sleep(2)
 			while submit_work() == "locked":
 				debug_print("Waiting for results file access...")
 				sleep(2)
@@ -481,7 +493,13 @@ while True:
 		debug_print("Primenet URL open error")
 
 	if primenet_login:
-		while get_assignment(percent) == "locked":
+		progress = None
+		while True:
+			progress = update_progress()
+			if progress != "locked": break
+			debug_print("Waiting for workfile access...")
+			sleep(2)
+		while get_assignment(progress) == "locked":
 			debug_print("Waiting for worktodo.ini access...")
 			sleep(2)
 	if timeout <= 0:
