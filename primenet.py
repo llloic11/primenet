@@ -240,6 +240,45 @@ def mersenne_find(line, complete=True):
 	# so take the intersection of those to regexp strings:
 	return re.search(b"rogram", line)
 
+try:
+    from statistics import median_low
+except ImportError:
+    def median_low(mylist):
+        sorts = sorted(mylist)
+        length = len(sorts)
+        return sorts[(length-1)//2]
+
+def parse_stat_file(p):
+	statfile = 'p' + str(p) + '.stat'
+	w = read_list_file(statfile)
+	unlock_file(statfile)
+	found = 0
+	regex = re.compile(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
+	times_per_iter = []
+	# get the 5 most recent Iter line
+	for line in reversed(w):
+		res = regex.search(line)
+		if res:
+			found += 1
+			if found == 1:
+				iteration = int(res.group(1))
+			time_per_iter = float(res.group(2))
+			unit = res.group(3)
+			if unit == b"sec":
+				time_per_iter *= 1000
+			times_per_iter.append(time_per_iter)
+			if found == 5: break
+	if found == 0: return None
+	# keep the last iteration to compute the percent of progress
+	percent = 100*float(iteration)/float(p)
+	debug_print("p:{} is {:.2f}% done".format(p, percent))
+	# take the min of the last grepped lines
+	time_per_iter = median_low(times_per_iter)
+	iteration_left = p - iteration
+	time_left = time_per_iter * iteration_left / 1000
+	debug_print("Finish estimated in {:.1f} days (used {:.1f} msec/iter estimation)".format(time_left/3600/24, time_per_iter))
+	return percent, time_left
+
 def update_progress():
 	w = read_list_file(workfile)
 	if w == "locked":
@@ -254,33 +293,17 @@ def update_progress():
 	else:
 		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
-	found = re.search(b',(.+?),', tasks[0])
+	found = re.findall(b',(.+?),', tasks[0])
 	if found:
-		p = found.group(1)
-		p = int(p)
-		statfile = 'p' + str(p) + '.stat'
-		w = read_list_file(statfile)
-		unlock_file(statfile)
-		# Extract iteration from most-recent statfile entry:
-		found = None
-		for line in reversed(w):
-			found = re.search(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter", line)
-			if found: break
+		#debug_print("update_progress: {found} = {"+str(found))
+		# Extract the subfield containing the exponent, whose position depends on the assignment type:
+		idx = 1 if (tasks[0][:3] == "PRP") else 0
+		p = int(found[idx])
+		found = parse_stat_file(p)
 		if found:
-			iteration = int(found.group(1))
-			time_per_iter = float(found.group(2))
-			unit = found.group(3)
-			if unit == b"sec":
-				time_per_iter *= 1000
-			# debug_print("Iteration = " + iter)
-			percent = 100*float(iteration)/float(p)
-			debug_print("prime = {}, iteration = {}, done = {:.2f}%, {:f} msec/iter".format(p, iteration, percent, time_per_iter))
-			iteration_left = p - iteration
-			time_left = time_per_iter * iteration_left / 1000
-			debug_print("Finish estimated in {:.1f} days".format(time_left/3600/24))
-			sys.stdout.flush()
+			percent, time_left = found
 		else:
-			debug_print("update_progress: Unable to find .stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
+			debug_print("update_progress: Unable to find or parse p"+str(p)+".stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
 			return
 	else:
 		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
