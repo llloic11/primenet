@@ -11,7 +11,7 @@
 
 ################################################################################
 #                                                                              #
-#   (C) 2017-2019 by Ernst W. Mayer.                                                #
+#   (C) 2017-2020 by Ernst W. Mayer.                                                #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify it     #
 #  under the terms of the GNU General Public License as published by the       #
@@ -45,12 +45,14 @@ from optparse import OptionParser
 #import urllib
 #import urllib2
 try:
+    # Python3
     import http.cookiejar as cookiejar
     from urllib.error import URLError
     from urllib.parse import urlencode
     from urllib.request import build_opener
     from urllib.request import HTTPCookieProcessor
 except ImportError:
+    # Python2
     import cookielib as cookiejar
     from urllib2 import URLError
     from urllib import urlencode
@@ -252,6 +254,8 @@ def parse_stat_file(p):
 	statfile = 'p' + str(p) + '.stat'
 	w = read_list_file(statfile)
 	unlock_file(statfile)
+	if len(w) == 0: # file doesn't exist
+		return None
 	found = 0
 	regex = re.compile(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
 	times_per_iter = []
@@ -268,7 +272,7 @@ def parse_stat_file(p):
 				time_per_iter *= 1000
 			times_per_iter.append(time_per_iter)
 			if found == 5: break
-	if found == 0: return None
+	if found == 0: return 0, None # progress is 0 percent, but don't know the estimated time yet
 	# keep the last iteration to compute the percent of progress
 	percent = 100*float(iteration)/float(p)
 	debug_print("p:{} is {:.2f}% done".format(p, percent))
@@ -293,11 +297,10 @@ def update_progress():
 	else:
 		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
-	found = re.findall(b',(.+?),', tasks[0])
-	if found:
-		#debug_print("update_progress: {found} = {"+str(found))
+	found = tasks[0].split(",")
+	idx = 3 if (tasks[0][:3] == "PRP") else 1
+	if len(found) > idx:
 		# Extract the subfield containing the exponent, whose position depends on the assignment type:
-		idx = 1 if (tasks[0][:3] == "PRP") else 0
 		p = int(found[idx])
 		found = parse_stat_file(p)
 		if found:
@@ -309,7 +312,7 @@ def update_progress():
 		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
 		return
 	return percent, time_left
-	# Found eligible current-assignment in workfile and a matching p*.stat file with last-entry containing "Iteration = ":
+	# Found eligible current-assignment in workfile and a matching p*.stat file with progress information 
 	mach_id = ""
 	# debug_print("len(mach_id) = " + str(len(mach_id)))
 	w = read_list_file(localfile)
@@ -392,7 +395,7 @@ def submit_work():
 	else:
 		# EWM: Switch to one-result-line-at-a-time submission to support error-message-on-submit handling:
 		for sendline in results_send:
-			sendline = sendline.decode('ascii')
+			sendline = sendline.decode('ascii', 'replace')
 			debug_print("Submitting\n" + sendline)
 			try:
 				post_data = urlencode({"data": sendline}).encode('ascii')
