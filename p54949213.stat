@@ -1,0 +1,9 @@
+INFO: primary restart file p55058951 not found...looking for secondary...
+INFO: no restart file found...starting run from scratch.
+INFO: no restart file found...starting run from scratch.
+M55058951: using FFT length 3072K = 3145728 8-byte floats, initial residue shift count = 18715841
+ this gives an average   17.502769152323406 bits per digit
+Using complex FFT radices       192        16        16        32
+[2020-04-04 10:30:38] M55058951 Iter# = 10000 [ 0.02% complete] clocks = 00:10:40.964 [ 64.0964 msec/iter] Res64: E58C58A80C14B71B. AvgMaxErr = 0.105437500. MaxErr = 0.156250000. Residue shift count = 36291309.
+[2020-04-04 10:30:38] M55058951 Iter# = 20000 [ 0.02% complete] clocks = 00:10:40.964 [ 65.0964 msec/iter] Res64: E58C58A80C14B71B. AvgMaxErr = 0.105437500. MaxErr = 0.156250000. Residue shift count = 36291309.
+[2020-04-04 10:30:38] M55058951 Iter# = 30000 [ 0.02% complete] clocks = 00:10:40.964 [ 69.0964 msec/iter] Res64: E58C58A80C14B71B. AvgMaxErr = 0.105437500. MaxErr = 0.156250000. Residue shift count = 36291309.
