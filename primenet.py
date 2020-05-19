@@ -77,9 +77,10 @@ def ass_generate(assignment):
 	# return output.rstrip("&")
 	return output
 
-def debug_print(text):
+def debug_print(text, file=sys.stdout):
 	if options.debug:
-		print(progname + ": " + text)
+		caller_name = sys._getframe(1).f_code.co_name
+		print(progname + ": " + caller_name + ": " + str(text), file=file)
 		sys.stdout.flush()
 
 def greplike(pattern, l):
@@ -95,6 +96,7 @@ def num_to_fetch(l, targetsize):
 	num_needed = targetsize - num_existing
 	return max(num_needed, 0)
 
+# FIXME use this function where useful
 def readonly_file(filename):
 	# Used when there is no intention to write the file back, so don't
 	# check or write lockfiles. Also returns a single string, no list.
@@ -202,6 +204,7 @@ def primenet_fetch(num_to_get):
 		"exp_hi": "",
 	}
 	try:
+		# TODO: use urlencode
 		openurl = primenet_baseurl + "manual_assignment/?" + ass_generate(assignment) + "B1=Get+Assignments"
 		debug_print("Fetching work via URL = "+openurl)
 		r = primenet.open(openurl)
@@ -239,7 +242,8 @@ def get_assignment(progress):
 		new_tasks = primenet_fetch(num_to_get)
 
 	num_fetched = len(new_tasks)
-	debug_print("Fetched " + str(num_fetched) + " new_tasks: " + str(new_tasks))
+	if num_fetched > 0:
+		debug_print("Fetched " + str(num_fetched) + " assignments: " + str(new_tasks))
 	write_list_file(workfile, new_tasks, "ab")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
@@ -423,7 +427,6 @@ def merge_config_and_options(config, options):
 			# they need to be converted to the expected type from options
 			if attr_val is not None:
 				new_val = type(attr_val)(new_val)
-			debug_print("get {} from config : {}".format(attr, new_val))
 			setattr(options, attr, new_val)
 		elif attr_val is not None and (not config.has_option("primenet", attr) \
 		   or config.get("primenet", attr) != str(attr_val)):
@@ -442,9 +445,9 @@ def update_progress():
 	found = re.search(b'=\s*([0-9A-F]{32}),', tasks[0])
 	if found:
 		assignment_id = found.group(1).decode("ascii","ignore")
-		debug_print("update_progress: assignment_id = " + assignment_id)
+		debug_print("assignment_id = " + assignment_id)
 	else:
-		debug_print("update_progress: Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
+		debug_print("Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
 	found = tasks[0].split(b",")
 	is_prp = tasks[0][:3] == b"PRP"
@@ -456,10 +459,10 @@ def update_progress():
 		if found:
 			percent, time_left = found
 		else:
-			debug_print("update_progress: Unable to find or parse p"+str(p)+".stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
+			debug_print("Unable to find or parse p"+str(p)+".stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
 			return
 	else:
-		debug_print("update_progress: Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
+		debug_print("Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
 		return
 
 	# Found eligible current-assignment in workfile and a matching p*.stat file with progress information
@@ -475,7 +478,7 @@ def update_progress():
 	args=primenet_v5_bargs.copy()
 	args["t"] = "ap" # update compute command
 	# k= the assignment ID (32 chars, follows '=' in Primenet-geerated workfile entries)
-	args["k"] = assignment_id
+	args["k"] = assignment_id+"ZEA"
 	# p= progress in %-done, 4-char format = xy.z
 	args["p"] = "{:.1f}".format(percent)
 	# d= when the client is expected to check in again (in seconds ... )
@@ -489,13 +492,13 @@ def update_progress():
 		args["stage"] = "LL"
 	result = send_request(guid, args)
 	if result is None:
-		print("update_progress: Error while updating on mersenne.org", file=sys.stderr)
+		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
 	elif int(result["pnErrorResult"]) != 0:
-		print("update_progress: Error while updating on mersenne.org", file=sys.stderr)
-		print("update_progress: Reason: "+result["pnErrorDetail"], file=sys.stderr)
-		print(result, file=sys.stderr)
+		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
+		debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
+		debug_print(result, file=sys.stderr)
 	else:
-		debug_print("update_progress: Update correctly send to server".format(guid))
+		debug_print("Update correctly send to server".format(guid))
 	return percent, time_left
 
 def submit_work():
@@ -523,7 +526,6 @@ def submit_work():
 	results = filter(mersenne_find, results)	# remove nonsubmittable lines from list of possibles
 	results_send = [line for line in results if line not in rs[1]]	# if a line was previously submitted, discard
 	results_send = list(set(results_send))	# In case resultsfile contained duplicate lines for some reason
-	debug_print("New-results has " + str(len(results_send)) + " entries.")
 
 	# Only for new results, to be appended to results_sent
 	sent = []
@@ -547,9 +549,9 @@ def submit_work():
 				elif b"Accepted" in res:
 					sent += sendline
 				else:
-					print("Submission of results line '" + sendline + "' failed for reasons unknown - please try manual resubmission.")
+					print("submit_work: Submission of results line '" + sendline + "' failed for reasons unknown - please try manual resubmission.")
 			except URLError:
-				debug_print("URL open error")
+				debug_print("URL open ERROR")
 
 	write_list_file(sentfile, results_send, "ab")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
 													# bad results (e.g. previously-submitted duplicates) every time the script executes.
@@ -579,9 +581,9 @@ group.add_option("--hostname", dest="hostname", help="Hostname name for mersenne
 group.add_option("-c", "--cpu_model", dest="cpu_model", default="unknown.unknown", help="CPU model")
 group.add_option("--features", dest="features", default="", help="CPU features")
 group.add_option("--frequency", dest="frequency", type="int", default=100, help="CPU frequency in MHz")
+group.add_option("--memory", dest="memory", type="int", default=0, help="memory size in MB")
 group.add_option("--L1", dest="L1", type="int", default=8, help="L1 cache size")
 group.add_option("--L2", dest="L2", type="int", default=512, help="L2 cache size")
-group.add_option("--memory", dest="memory", type="int", default=0, help="memory size in MB")
 group.add_option("--np", dest="np", type="int", default=1, help="number of processors")
 parser.add_option_group(group)
 
@@ -684,14 +686,14 @@ while True:
 		r = primenet.open(primenet_baseurl + "default.php", data)
 		if not (options.username + "<br>logged in").encode('ascii') in r.read():
 			primenet_login = False
-			debug_print("Login failed.")
+			debug_print("ERROR: Login failed.")
 		else:
 			primenet_login = True
 			while submit_work() == "locked":
 				debug_print("Waiting for results file access...")
 				sleep(2)
 	except URLError:
-		debug_print("Primenet URL open error")
+		debug_print("Primenet URL open ERROR")
 
 	if primenet_login:
 		progress = None
