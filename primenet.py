@@ -655,6 +655,9 @@ if options.register:
 	register_instance(guid)
 	sys.exit(0)
 
+if options.username is None or options.password is None:
+	parser.error("Username and password must be given")
+
 while True:
 	# Log in to primenet
 	try:
