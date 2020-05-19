@@ -80,7 +80,10 @@ def ass_generate(assignment):
 def debug_print(text, file=sys.stdout):
 	if options.debug:
 		caller_name = sys._getframe(1).f_code.co_name
-		print(progname + ": " + caller_name + ": " + str(text), file=file)
+		if caller_name == '<module>':
+			caller_name = 'main loop'
+		caller_string = caller_name + ": "
+		print(progname + ": " + caller_string + str(text), file=file)
 		sys.stdout.flush()
 
 def greplike(pattern, l):
