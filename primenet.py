@@ -4,8 +4,7 @@
 
 # EWM: adapted from https://github.com/MarkRose/primetools/blob/master/mfloop.py by teknohog and Mark Rose, with help rom Gord Palameta.
 
-# This only handles LL testing (first-time and double-check) for now.
-# To-do: Add support for PRP-testing.
+# This handles LL and PRP testing (first-time and double-check).
 
 # This version can run in parallel with Mlucas, as it uses lockfiles to avoid conflicts when updating files.
 
