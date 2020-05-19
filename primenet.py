@@ -304,35 +304,11 @@ def parse_v5_resp(r):
 		ans[option]=value
 	return ans
 
-from hashlib import md5
-def make_v5_client_key(guid):
-	"""guid must be a 32-byte hexa string, as used in the 'g' args of V5 API"""
-	h = bytearray(md5(guid).digest()) # h is 16 bytes long bytearray(), which is mutable unlike bytes()
-	for i in range(16):
-		d = c = h[i]
-		c = (c^0x49)&0xf
-		d = (d ^ 0x45) ^ h[c]
-		h[i] = d # mutability used
-	return md5(h).hexdigest().upper()
-
-from random import getrandbits
-def add_secure_v5_args(args, key, salt=None):
-	"""Add sh and ss arguments given a random salt (to sh) and the key derived from guid by make_v5_client_key
-	>>> add_secure_v5_args("v=0.95&px=GIMPS&t=ap&g=0807e4456339466376bcf63436fe5176&k=51D7100698D8B18893B7BE2AB5FDCEBC&stage=LL&c=0&p=83.0492&d=86400&e=1268735&iteration=85000000&res64=9CE24584CD974BF0&ec=00000000", make_v5_client_key(b"0807e4456339466376bcf63436fe5176"), 40830)
-	'v=0.95&px=GIMPS&t=ap&g=0807e4456339466376bcf63436fe5176&k=51D7100698D8B18893B7BE2AB5FDCEBC&stage=LL&c=0&p=83.0492&d=86400&e=1268735&iteration=85000000&res64=9CE24584CD974BF0&ec=00000000&ss=40830&sh=DF7FD29CA068A0ED1843F4BB85840F3B'
-"""
-	if salt is None:
-		salt = getrandbits(16)
-	args += "&ss="+str(salt)+"&"
-	args_to_hash= args+key
-	sh = md5(args_to_hash.encode("ascii")).hexdigest().upper()
-	# Note that ss and sh args MUST be the last ones in the url, in this order
-	return args+"sh="+sh
-
+from primenet_v5_hashing import add_secure_v5_args
 def send_request(guid, args):
 	args["g"] = guid
 	url_args = urlencode(args)
-	url_args = add_secure_v5_args(url_args, make_v5_client_key(guid.encode('ascii')))
+	url_args = add_secure_v5_args(url_args, guid)
 	try:
 		# don't need to use primenet opener because this API doesn't have cookies
 		r = urlopen(primenet_v5_burl+url_args)
@@ -346,6 +322,7 @@ def send_request(guid, args):
 		return None
 	return parse_v5_resp(r.read().decode("utf-8","replace"))
 
+from random import getrandbits
 def create_new_guid():
 	guid = hex(getrandbits(128))
 	if guid[:2] == '0x': guid = guid[2:] # remove the 0x prefix
