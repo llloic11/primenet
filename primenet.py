@@ -460,7 +460,7 @@ def update_progress():
 	args=primenet_v5_bargs.copy()
 	args["t"] = "ap" # update compute command
 	# k= the assignment ID (32 chars, follows '=' in Primenet-geerated workfile entries)
-	args["k"] = assignment_id+"ZEA"
+	args["k"] = assignment_id
 	# p= progress in %-done, 4-char format = xy.z
 	args["p"] = "{:.1f}".format(percent)
 	# d= when the client is expected to check in again (in seconds ... )
