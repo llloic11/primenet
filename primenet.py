@@ -326,6 +326,7 @@ from random import getrandbits
 def create_new_guid():
 	guid = hex(getrandbits(128))
 	if guid[:2] == '0x': guid = guid[2:] # remove the 0x prefix
+	if guid[-1] == 'L': guid = guid[:-1] # remove trailling 'L' in python2
 	# add missing 0 to the beginning"
 	guid = (32-len(guid))*"0" + guid
 	return guid
