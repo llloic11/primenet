@@ -356,7 +356,7 @@ def register_instance(guid):
 	hardware_id = sha256(options.cpu_model.encode("utf-8")).hexdigest()[:32] # similar as mprime
 	args = primenet_v5_bargs.copy()
 	args["t"] = "uc"					# update compute command
-	args["a"] = "Linux64,Prime95"		# need to fake mprime or the application is refused by the server
+	args["a"] = "Linux64,Mlucas,v19"	# 
 	args["wg"] = ""						# only filled on Windows by mprime
 	args["hd"] = hardware_id			# 32 hex char (128 bits)
 	args["c"] = options.cpu_model[:64]	# CPU model (len between 8 and 64)
