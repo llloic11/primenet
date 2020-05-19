@@ -347,6 +347,8 @@ def send_request(guid, args):
 def create_new_guid():
 	guid = hex(getrandbits(128))
 	if guid[:2] == '0x': guid = guid[2:] # remove the 0x prefix
+	# add missing 0 to the beginning"
+	guid = (32-len(guid))*"0" + guid
 	return guid
 
 def register_instance(guid):
