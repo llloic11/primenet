@@ -341,7 +341,7 @@ def register_instance(guid):
 	args["wg"] = ""						# only filled on Windows by mprime
 	args["hd"] = hardware_id			# 32 hex char (128 bits)
 	args["c"] = options.cpu_model[:64]	# CPU model (len between 8 and 64)
-	args["f"] = options.features		# CPU option (like asimd, max len 64)
+	args["f"] = options.features[:64]	# CPU option (like asimd, max len 64)
 	args["L1"] = options.L1				# L1 cache size in Bytes
 	args["L2"] = options.L2				# L2 cache size in Bytes
 										# if smaller or equal then 256,
@@ -643,6 +643,8 @@ if not (8 <= len(options.cpu_model) <= 64):
 	parser.error("cpu_model must be between 8 and 64 characters")
 if options.hostname is not None and len(options.hostname) > 20:
 	parser.error("hostname must be less than 21 characters")
+if options.features is not None and len(options.features) > 64:
+	parser.error("features must be less than 64 characters")
 
 # write back local.ini if necessary
 if config_updated:
