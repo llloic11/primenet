@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Automatic assignment handler for Mlucas using manual testing forms at mersenne.org
 
@@ -627,7 +628,7 @@ sentfile = os.path.join(workdir, "results_sent.txt")
 workpattern = b"(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
 
 # mersenne.org limit is about 4 KB; stay on the safe side
-sendlimit = 3000
+sendlimit = 3000 # TODO: enforce this limit
 
 # adapted from http://stackoverflow.com/questions/923296/keeping-a-session-in-python-while-making-http-requests
 primenet_cj = cookiejar.CookieJar()
@@ -639,6 +640,7 @@ config_updated = merge_config_and_options(config, options)
 
 # check options after merging so that if local.ini file is changed by hand,
 # values are also checked
+# TODO: check that input char are ascii or at least supported by the server
 if not (8 <= len(options.cpu_model) <= 64):
 	parser.error("cpu_model must be between 8 and 64 characters")
 if options.hostname is not None and len(options.hostname) > 20:
