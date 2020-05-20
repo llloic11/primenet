@@ -252,8 +252,7 @@ def get_assignment(progress):
 
 def mersenne_find(line, complete=True):
 	# Pre-v19 old-style HRF-formatted result used "Program:..."; starting w/v19 JSON-formatted result uses "program",
-	# so take the intersection of those to regexp strings:
-	return re.search(b"rogram", line)
+	return re.search(b"[Pp]rogram", line)
 
 try:
     from statistics import median_low
