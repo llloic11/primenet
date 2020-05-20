@@ -520,7 +520,7 @@ def submit_work():
 			sendline = sendline.decode('ascii', 'replace')
 			debug_print("Submitting\n" + sendline)
 			try:
-				post_data = urlencode({"data": sendline}).encode('ascii')
+				post_data = urlencode({"data": sendline}).encode('utf-8')
 				r = primenet.open(primenet_baseurl + "manual_result/default.php", post_data)
 				res = r.read()
 				if b"Error" in res:
@@ -666,9 +666,9 @@ while True:
 		}
 
 		# This makes a POST instead of GET
-		data = urlencode(login_data).encode('ascii')
+		data = urlencode(login_data).encode('utf-8')
 		r = primenet.open(primenet_baseurl + "default.php", data)
-		if not (options.username + "<br>logged in").encode('ascii') in r.read():
+		if not (options.username + "<br>logged in").encode('utf-8') in r.read():
 			primenet_login = False
 			debug_print("ERROR: Login failed.")
 		else:
