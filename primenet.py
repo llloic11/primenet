@@ -99,31 +99,21 @@ def num_to_fetch(l, targetsize):
 	num_needed = targetsize - num_existing
 	return max(num_needed, 0)
 
-# FIXME use this function where useful
-def readonly_file(filename):
+def readonly_list_file(filename, mode="rb"):
 	# Used when there is no intention to write the file back, so don't
 	# check or write lockfiles. Also returns a single string, no list.
-	if os.path.exists(filename):
-		File = open(filename, "r")
-		contents = File.read()
+	with open(filename, mode=mode) as File:
+		contents = File.readlines()
 		File.close()
-	else:
-		contents = ""
-	return contents
+		return [ x.rstrip() for x in contents ]
+	return []
 
-def read_list_file(filename):
+def read_list_file(filename, mode="rb"):
 	# Used when we plan to write the new version, so use locking
 	lockfile = filename + ".lck"
 	try:
 		fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
 		os.close(fd)
-		if os.path.exists(filename):
-			File = open(filename, "rb")
-			contents = File.readlines()
-			File.close()
-			return [ x.rstrip() for x in contents ]
-		else:
-			return []
 	# This python2-style exception decl gives a syntax error in python3:
 	# except OSError, e:
 	# https://stackoverflow.com/questions/11285313/try-except-as-error-in-python-2-5-python-3-x
@@ -134,6 +124,7 @@ def read_list_file(filename):
 			return "locked"
 		else:
 			raise
+	return readonly_list_file(filename, mode=mode)
 
 def write_list_file(filename, l, mode="wb"):
 	# Assume we put the lock in upon reading the file, so we can
@@ -265,10 +256,7 @@ except ImportError:
 
 def parse_stat_file(p):
 	statfile = 'p' + str(p) + '.stat'
-	w = read_list_file(statfile)
-	unlock_file(statfile)
-	if len(w) == 0: # file doesn't exist
-		return None
+	w = readonly_list_file(statfile) # line appended one by one, no lock needed
 	found = 0
 	regex = re.compile(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
 	times_per_iter = []
@@ -418,10 +406,7 @@ def merge_config_and_options(config, options):
 	return updated
 
 def update_progress():
-	w = read_list_file(workfile)
-	if w == "locked":
-		return "locked"
-	unlock_file(workfile)
+	w = readonly_list_file(workfile)
 
 	tasks = greplike(workpattern, w)
 	found = re.search(b'=\s*([0-9A-F]{32}),', tasks[0])
@@ -484,29 +469,16 @@ def update_progress():
 	return percent, time_left
 
 def submit_work():
-	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
-	files = [resultsfile, sentfile]
-	rs = [ read_list_file(f) for f in files ]
-	#
-	# EWM: Mark Rose comments:
-	# This code is calling the read_list_file function for every item in the files list. It's putting the
-	# results of the function for the first file, resultsfile, in the first position in the array, rs[0].
-	# Inside read_list_file, it's opening the file, calling readlines to get the contents of it into an array,
-	# then calling the rstrip function on every line to remove trailing whitespace. It then returns the array.
-	#
-	# EWM: Note that read_list_file does not need the file(s) to exist - nonexistent files simply yield 0-length rs-array entries.
-
-	if "locked" in rs:
-		# Remove the lock in case one of these was unlocked at start
-		for i in range(len(files)):
-			if rs[i] != "locked":
-				debug_print("unlock_file() for" + files[i])
-				unlock_file(files[i])
+	results_send = read_list_file(sentfile)
+	if results_send == "locked":
 		return "locked"
 
-	results = rs[0]
+	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
+	results = readonly_list_file(resultsfile) # appended line by line, no lock needed
+	# EWM: Note that read_list_file does not need the file(s) to exist - nonexistent files simply yield 0-length rs-array entries.
 	results = filter(mersenne_find, results)	# remove nonsubmittable lines from list of possibles
-	results_send = [line for line in results if line not in rs[1]]	# if a line was previously submitted, discard
+
+	results_send = [line for line in results if line not in results_send]	# if a line was previously submitted, discard
 	results_send = list(set(results_send))	# In case resultsfile contained duplicate lines for some reason
 
 	# Only for new results, to be appended to results_sent
@@ -537,7 +509,6 @@ def submit_work():
 
 	write_list_file(sentfile, results_send, "ab")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
 													# bad results (e.g. previously-submitted duplicates) every time the script executes.
-	unlock_file(resultsfile)	# EWM: don't write anything to resultsfile, but still need to remove lock placed on it by read_list_file
 
 parser = OptionParser(version="primenet.py 19.1")
 
@@ -684,12 +655,7 @@ while True:
 		debug_print("Primenet URL open ERROR")
 
 	if primenet_login:
-		progress = None
-		while True:
-			progress = update_progress()
-			if progress != "locked": break
-			debug_print("Waiting for workfile access...")
-			sleep(2)
+		progress = update_progress()
 		while get_assignment(progress) == "locked":
 			debug_print("Waiting for worktodo.ini access...")
 			sleep(2)
