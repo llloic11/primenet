@@ -15,7 +15,7 @@ def add_secure_v5_args(args, guid, salt=None):
 		c = (c^0x49)&0xf
 		d = (d ^ 0x45) ^ h[c]
 		h[i] = d # mutability used
-	key = md5(h).hexdigest().upper()
+	key = md5(bytes(h)).hexdigest().upper() # the bytes() convertion is necessary for python2.6 and before
 	if salt is None:
 		salt = getrandbits(16)
 	args += "&ss="+str(salt)+"&"

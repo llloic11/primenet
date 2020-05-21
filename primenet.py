@@ -219,12 +219,12 @@ def get_assignment(progress):
 	num_cache = int(options.num_cache)
 	if percent is not None and percent >= int(options.percent_limit):
 		num_cache += 1
-		debug_print("Progress of current assignment is {} and bigger than limit ({}), so num_cache is increased by one to {}".format(percent, options.percent_limit, num_cache))
+		debug_print("Progress of current assignment is {percent} and bigger than limit ({1}), so num_cache is increased by one to {2}".format(percent, options.percent_limit, num_cache))
 	elif time_left is not None and time_left <= max(3*options.timeout, 24*3600):
 		# use else if here is important,
 		# time_left and percent increase are exclusive (don't want to do += 2)
 		num_cache += 1
-		debug_print("Time_left is {} and smaller than limit ({}), so num_cache is increased by one to {}".format(time_left, max(3*options.timeout, 24*3600), num_cache))
+		debug_print("Time_left is {0} and smaller than limit ({1}), so num_cache is increased by one to {2}".format(time_left, max(3*options.timeout, 24*3600), num_cache))
 	num_to_get = num_to_fetch(tasks, num_cache)
 
 	if num_to_get < 1:
@@ -256,7 +256,7 @@ except ImportError:
 
 def parse_stat_file(p):
 	statfile = 'p' + str(p) + '.stat'
-	w = readonly_list_file(statfile) # line appended one by one, no lock needed
+	w = readonly_list_file(statfile) # appended line by line, no lock needed
 	found = 0
 	regex = re.compile(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
 	times_per_iter = []
@@ -276,12 +276,12 @@ def parse_stat_file(p):
 	if found == 0: return 0, None # progress is 0 percent, but don't know the estimated time yet
 	# keep the last iteration to compute the percent of progress
 	percent = 100*float(iteration)/float(p)
-	debug_print("p:{} is {:.2f}% done".format(p, percent))
+	debug_print("p:{0} is {1:.2f}% done".format(p, percent))
 	# take the min of the last grepped lines
 	time_per_iter = median_low(times_per_iter)
 	iteration_left = p - iteration
 	time_left = int(time_per_iter * iteration_left / 1000)
-	debug_print("Finish estimated in {:.1f} days (used {:.1f} msec/iter estimation)".format(time_left/3600/24, time_per_iter))
+	debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(time_left/3600/24, time_per_iter))
 	return percent, time_left
 
 def parse_v5_resp(r):
@@ -301,11 +301,11 @@ def send_request(guid, args):
 		# don't need to use primenet opener because this API doesn't have cookies
 		r = urlopen(primenet_v5_burl+url_args)
 	except HTTPError as e:
-		print("ERROR receiving answer to request: {}".format(primenet_v5_burl+url_args), file=sys.stderr)
+		print("ERROR receiving answer to request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
 		print(e, file=sys.stderr)
 		return None
 	except URLError as e:
-		print("ERROR connecting to server for request: {}".format(primenet_v5_burl+url_args), file=sys.stderr)
+		print("ERROR connecting to server for request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
 		print(e, file=sys.stderr)
 		return None
 	return parse_v5_resp(r.read().decode("utf-8","replace"))
@@ -351,7 +351,7 @@ def register_instance(guid):
 	elif int(result["pnErrorResult"]) != 0:
 		parser.error("Error while registering on mersenne.org\nReason: "+result["pnErrorDetail"])
 	config_write(config, guid=guid)
-	print("GUID {} correctly registered".format(guid))
+	print("GUID {guid} correctly registered".format(guid=guid))
 	return
 
 def config_read():
@@ -359,7 +359,7 @@ def config_read():
 	try:
 		config.read([localfile])
 	except ConfigParserError as e:
-		print("ERROR reading {} file:".format(localfile), file=sys.stderr)
+		print("ERROR reading {0} file:".format(localfile), file=sys.stderr)
 		print(e, file=sys.stderr)
 	if not config.has_section("primenet"):
 		# Create the section to avoid having to test for it later
@@ -400,7 +400,7 @@ def merge_config_and_options(config, options):
 			setattr(options, attr, new_val)
 		elif attr_val is not None and (not config.has_option("primenet", attr) \
 		   or config.get("primenet", attr) != str(attr_val)):
-			debug_print("update local.ini with {}={}".format(attr, attr_val))
+			debug_print("update local.ini with {0}={1}".format(attr, attr_val))
 			config.set("primenet", attr, str(attr_val))
 			updated = True
 	return updated
@@ -447,7 +447,7 @@ def update_progress():
 	# k= the assignment ID (32 chars, follows '=' in Primenet-geerated workfile entries)
 	args["k"] = assignment_id
 	# p= progress in %-done, 4-char format = xy.z
-	args["p"] = "{:.1f}".format(percent)
+	args["p"] = "{0:.1f}".format(percent)
 	# d= when the client is expected to check in again (in seconds ... )
 	args["d"] = options.timeout if options.timeout else 24*3600
 	# e= the ETA of completion in seconds, if unknown, just put 1 week
@@ -499,7 +499,7 @@ def submit_work():
 				if b"Error" in res:
 					ibeg = res.find(b"Error")
 					iend = res.find(b"</div>", ibeg)
-					print("Submission failed: '{}'".format(res[ibeg:iend]))
+					print("Submission failed: '{0}'".format(res[ibeg:iend]))
 				elif b"Accepted" in res:
 					sent += sendline
 				else:
@@ -529,9 +529,9 @@ parser.add_option("-L", "--percent_limit", dest="percent_limit", type="int", def
 parser.add_option("-t", "--timeout", dest="timeout", type="int", default=21600, help="Seconds to wait between network updates, default 21600 [6 hours]. Use 0 for a single update without looping.")
 
 group = OptionGroup(parser, "Registering Options: send to mersenne.org when registering, visible in CPUs in the website.")
-group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Force registering to mersenne.org, this allows sending regular updates and follow the progress on the website. This requires giving --hostname")
+group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website. This requires giving --hostname")
 group.add_option("--hostname", dest="hostname", help="Hostname name for mersenne.org")
-group.add_option("-c", "--cpu_model", dest="cpu_model", default="unknown.unknown", help="CPU model")
+group.add_option("-c", "--cpu_model", dest="cpu_model", default="cpu.unknown", help="CPU model")
 group.add_option("--features", dest="features", default="", help="CPU features")
 group.add_option("--frequency", dest="frequency", type="int", default=100, help="CPU frequency in MHz")
 group.add_option("--memory", dest="memory", type="int", default=0, help="memory size in MB")
