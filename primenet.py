@@ -102,11 +102,13 @@ def num_to_fetch(l, targetsize):
 def readonly_list_file(filename, mode="rb"):
 	# Used when there is no intention to write the file back, so don't
 	# check or write lockfiles. Also returns a single string, no list.
-	with open(filename, mode=mode) as File:
-		contents = File.readlines()
-		File.close()
-		return [ x.rstrip() for x in contents ]
-	return []
+	try:
+		with open(filename, mode=mode) as File:
+			contents = File.readlines()
+			File.close()
+			return [ x.rstrip() for x in contents ]
+	except (IOError,OSError):
+		return []
 
 def read_list_file(filename, mode="rb"):
 	# Used when we plan to write the new version, so use locking
