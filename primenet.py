@@ -512,7 +512,13 @@ def submit_work():
 	write_list_file(sentfile, results_send, "ab")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
 													# bad results (e.g. previously-submitted duplicates) every time the script executes.
 
-parser = OptionParser(version="primenet.py 19.1")
+parser = OptionParser(version="primenet.py 19.1", description=\
+"""This program is used to fill worktodo.ini with assignments and send the results for Mlucas
+program. It also saves its configuration to local.ini file, so it is necessary to gives the arguments only the first time you call it. Arguments are recovered for local.ini if not given.
+If --register is given, it registers the current Mlucas instance to mersenne.org (see all the options identify your CPU correctly). Registering is optionnal, but if registered, the progress can be sent and your CPU monitored on your account on the website.
+Then, without --register, it fetches assignment and send results to mersenne.org using manual assignment process on a "timeout" basic, or only once if timeout=0.
+"""
+)
 
 # options not saved to local.ini
 parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Display debugging info")
@@ -531,7 +537,7 @@ parser.add_option("-L", "--percent_limit", dest="percent_limit", type="int", def
 parser.add_option("-t", "--timeout", dest="timeout", type="int", default=21600, help="Seconds to wait between network updates, default 21600 [6 hours]. Use 0 for a single update without looping.")
 
 group = OptionGroup(parser, "Registering Options: send to mersenne.org when registering, visible in CPUs in the website.")
-group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website. This requires giving --hostname")
+group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website. This requires giving --hostname to identify the instance")
 group.add_option("--hostname", dest="hostname", help="Hostname name for mersenne.org")
 group.add_option("-c", "--cpu_model", dest="cpu_model", default="cpu.unknown", help="CPU model")
 group.add_option("--features", dest="features", default="", help="CPU features")
