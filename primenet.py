@@ -40,6 +40,7 @@ import os
 import math
 from optparse import OptionParser, OptionGroup
 from hashlib import sha256
+import json
 
 # More python3-backward-incompatibility-breakage-related foo - thanks to Gord Palameta for the workaround:
 #import cookielib
@@ -69,6 +70,41 @@ primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
 primenet_v5_bargs = {"px":"GIMPS", "v": 0.95}
 primenet_baseurl = "https://www.mersenne.org/"
 primenet_login = False
+
+class primenet_api:
+	ERROR_OK = 0
+	ERROR_SERVER_BUSY = 3
+	ERROR_INVALID_VERSION = 4
+	ERROR_INVALID_TRANSACTION = 5
+	ERROR_INVALID_PARAMETER = 7 #   Returned for length, type, or character invalidations.
+	ERROR_ACCESS_DENIED = 9
+	ERROR_DATABASE_FULL_OR_BROKEN = 13
+	# Account related errors:
+	ERROR_INVALID_USER = 21
+	# Computer cpu/software info related errors:
+	ERROR_OBSOLETE_CLIENT = 31
+	ERROR_UNREGISTERED_CPU = 30
+	ERROR_STALE_CPU_INFO = 32
+	ERROR_CPU_IDENTITY_MISMATCH = 33
+	ERROR_CPU_CONFIGURATION_MISMATCH = 34
+	# Work assignment related errors:
+	ERROR_NO_ASSIGNMENT = 40
+	ERROR_INVALID_ASSIGNMENT_KEY = 43
+	ERROR_INVALID_ASSIGNMENT_TYPE = 44
+	ERROR_INVALID_RESULT_TYPE = 45
+	ERROR_INVALID_WORK_TYPE = 46
+	ERROR_WORK_NO_LONGER_NEEDED = 47
+	PRIMENET_AR_NO_RESULT		= 0		# No result, just sending done msg
+	PRIMENET_AR_TF_FACTOR		= 1		# Trial factoring, factor found
+	PRIMENET_AR_P1_FACTOR		= 2		# P-1, factor found
+	PRIMENET_AR_ECM_FACTOR		= 3		# ECM, factor found
+	PRIMENET_AR_TF_NOFACTOR		= 4		# Trial Factoring no factor found
+	PRIMENET_AR_P1_NOFACTOR		= 5		# P-1 Factoring no factor found
+	PRIMENET_AR_ECM_NOFACTOR	= 6		# ECM Factoring no factor found
+	PRIMENET_AR_LL_RESULT		= 100	# LL result, not prime
+	PRIMENET_AR_LL_PRIME		= 101	# LL result, Mersenne prime
+	PRIMENET_AR_PRP_RESULT		= 150	# PRP result, not prime
+	PRIMENET_AR_PRP_PRIME		= 151	# PRP result, probably prime
 
 def ass_generate(assignment):
 	output = ""
@@ -135,7 +171,8 @@ def write_list_file(filename, l, mode="wb"):
 	# A "null append" is meaningful, as we can call this to clear the
 	# lockfile. In this case the main file need not be touched.
 	if not ( "a" in mode and len(l) == 0):
-		content = b"\n".join(l) + b"\n"
+		newline = b'\n' if 'b' in mode else '\n'
+		content = newline.join(l) + newline
 		File = open(filename, mode)
 		File.write(content)
 		File.close()
@@ -246,7 +283,7 @@ def get_assignment(progress):
 
 def mersenne_find(line, complete=True):
 	# Pre-v19 old-style HRF-formatted result used "Program:..."; starting w/v19 JSON-formatted result uses "program",
-	return re.search(b"[Pp]rogram", line)
+	return re.search("[Pp]rogram", line)
 
 try:
     from statistics import median_low
@@ -469,16 +506,128 @@ def update_progress():
 		debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
 		debug_print(result, file=sys.stderr)
 	else:
-		debug_print("Update correctly send to server".format(guid))
+		debug_print("Update correctly send to server")
 	return percent, time_left
 
+def submit_one_line(sendline):
+	"""Submit one line"""
+	debug_print("Submitting\n" + sendline)
+	try:
+		ar = json.loads(sendline)
+		is_json = True
+	except json.decoder.JSONDecodeError:
+		is_json = False
+	guid = get_guid(config)
+	if guid is not None and is_json:
+		# If registered and the line is a JSON, submit using the v API
+		# The result will be attributed to the registered computer
+		sent = submit_one_line_v5(sendline, guid, ar)
+	else:
+		# The result will be attributed to "Manual testing"
+		sent = submit_one_line_manually(sendline)
+	return sent
+
+def get_result_type(ar):
+	"""Extract result type from JSON result"""
+	if ar['worktype'] == 'LL':
+		if ar['status'] == 'P':
+			return primenet_api.PRIMENET_AR_LL_PRIME
+		else:
+			return primenet_api.PRIMENET_AR_LL_RESULT
+	elif ar['worktype'].startswith('PRP'):
+		if ar['status'] == 'P':
+			return primenet_api.PRIMENET_AR_PRP_PRIME
+		else:
+			return primenet_api.PRIMENET_AR_PRP_RESULT
+	else:
+		raise ValueError("This is a bug in primenet.py, Unsupported worktype {0}".format(ar['worktype']))
+
+def submit_one_line_v5(sendline, guid, ar):
+	"""Submit one result line using V5 API, will be attributed to the computed identified by guid"""
+	# JSON is required because assignment_id is necessary in that case
+	# and it is not present in old output format.
+	aid = ar['aid']
+	result_type = get_result_type(ar)
+	args = primenet_v5_bargs.copy()
+	args["t"] = "ar"								# assignment result
+	args["k"] = ar['aid'] if 'aid' in ar else 0		# assignment id
+	args["m"] = sendline							# message is the complete JSON string
+	args["r"] = result_type							# result type
+	args["d"] = 1									# done: 0 for no closing is used for partial results
+	args["n"] = ar['exponent']
+	if result_type == primenet_api.PRIMENET_AR_LL_RESULT:
+			args["rd"] = ar['res64']
+	elif result_type in (primenet_api.PRIMENET_AR_PRP_RESULT, primenet_api.PRIMENET_AR_PRP_PRIME):
+		args.update({"A": 1, "b": 2, "c": -1})
+		if result_type == primenet_api.PRIMENET_AR_PRP_RESULT:
+			args["rd"] = ar['res64']
+		if 'known-factors' in ar:
+			args['nkf'] = len(ar['known-factors'])
+		args["base"] = ar['worktype'][4:]	# worktype == PRP-base
+		if 'residue-type' in ar:
+			args["rt"] = ar['residue-type']
+		if 'shift-count' in ar:
+			args['sc'] = ar['shift-count']
+		if 'errors' in ar:
+			args['gbz'] = 1
+	if 'error-code' in ar:
+		args["ec"] = ar['error-code']
+	args['fftlen'] = ar['fft-length']
+	result = send_request(guid, args)
+	#result = None
+	print(args)
+	if result is None:
+		debug_print("ERROR while submitting result on mersenne.org: assignment_id={0}".format(aid), file=sys.stderr)
+		# if this happens, the submission can be retried
+		# since no answer has been received from the server
+		return False
+	elif int(result["pnErrorResult"]) == primenet_api.ERROR_OK:
+		debug_print("Result correctly send to server: assignment_id={0}".format(aid))
+		if result["pnErrorDetail"] != "SUCCESS":
+			debug_print("server message: "+result["pnErrorDetail"])
+	else: # non zero ERROR code
+		debug_print("ERROR while submitting result on mersenne.org: assignment_id={0}".format(aid), file=sys.stderr)
+		if int(result["pnErrorResult"]) is primenet_api.ERROR_UNREGISTERED_CPU:
+			# should register again and retry
+			debug_print("Please run --register again and retry", file=sys.stderr)
+			return False
+		elif int(result["pnErrorResult"]) is primenet_api.ERROR_INVALID_PARAMETER:
+			debug_print("INVALID PARAMEER: this is a bug in primenet.py, please notify the author", file=sys.stderr)
+			debug_print(result, file=sys.stderr)
+			return False
+		else:
+			# In that case, the submission must not be retried
+			debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
+			return True
+	return True
+
+def submit_one_line_manually(sendline):
+	"""Submit results using manual testing, will be attributed to "Manual Testing" in mersenne.org"""
+	try:
+		post_data = urlencode({"data": sendline}).encode('utf-8')
+		r = primenet.open(primenet_baseurl + "manual_result/default.php", post_data)
+		res = r.read()
+		if b"Error" in res:
+			res_str = res.decode("utf-8", "replace")
+			ibeg = res_str.find("Error")
+			iend = res_str.find("</div>", ibeg)
+			print("Submission failed: '{0}'".format(res_str[ibeg:iend]))
+		elif b"Accepted" in res:
+			pass
+		else:
+			print("submit_work: Submission of results line '" + sendline + "' failed for reasons unknown - please try manual resubmission.")
+	except URLError:
+		debug_print("URL open ERROR")
+	return True	# EWM: Append entire results_send rather than just sent to avoid resubmitting
+				# bad results (e.g. previously-submitted duplicates) every time the script executes.
+
 def submit_work():
-	results_send = read_list_file(sentfile)
+	results_send = read_list_file(sentfile, "r")
 	if results_send == "locked":
 		return "locked"
 
 	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
-	results = readonly_list_file(resultsfile) # appended line by line, no lock needed
+	results = readonly_list_file(resultsfile, "r") # appended line by line, no lock needed
 	# EWM: Note that read_list_file does not need the file(s) to exist - nonexistent files simply yield 0-length rs-array entries.
 	results = filter(mersenne_find, results)	# remove nonsubmittable lines from list of possibles
 
@@ -494,25 +643,10 @@ def submit_work():
 	else:
 		# EWM: Switch to one-result-line-at-a-time submission to support error-message-on-submit handling:
 		for sendline in results_send:
-			sendline = sendline.decode('ascii', 'replace')
-			debug_print("Submitting\n" + sendline)
-			try:
-				post_data = urlencode({"data": sendline}).encode('utf-8')
-				r = primenet.open(primenet_baseurl + "manual_result/default.php", post_data)
-				res = r.read()
-				if b"Error" in res:
-					ibeg = res.find(b"Error")
-					iend = res.find(b"</div>", ibeg)
-					print("Submission failed: '{0}'".format(res[ibeg:iend]))
-				elif b"Accepted" in res:
-					sent += sendline
-				else:
-					print("submit_work: Submission of results line '" + sendline + "' failed for reasons unknown - please try manual resubmission.")
-			except URLError:
-				debug_print("URL open ERROR")
-
-	write_list_file(sentfile, results_send, "ab")	# EWM: Append entire results_send rather than just sent to avoid resubmitting
-													# bad results (e.g. previously-submitted duplicates) every time the script executes.
+			is_sent = submit_one_line(sendline) 
+			if is_sent:
+				sent.append(sendline)
+	write_list_file(sentfile, sent, "a")
 
 parser = OptionParser(version="primenet.py 19.1", description=\
 """This program is used to fill worktodo.ini with assignments and send the results for Mlucas
