@@ -329,6 +329,8 @@ def register_instance(guid):
 	args = primenet_v5_bargs.copy()
 	args["t"] = "uc"					# update compute command
 	args["a"] = "Linux64,Mlucas,v19"	# 
+	if config.has_option("primenet", "sw_version"):
+			args["a"] = config.get("primenet", "sw_version")
 	args["wg"] = ""						# only filled on Windows by mprime
 	args["hd"] = hardware_id			# 32 hex char (128 bits)
 	args["c"] = options.cpu_model[:64]	# CPU model (len between 8 and 64)
@@ -338,7 +340,7 @@ def register_instance(guid):
 										# if smaller or equal then 256,
 										# server refuses to gives LL assignment
 	args["np"] = options.np				# number of cores
-	args["hp"] = 0						# number of hyperthreading cores
+	args["hp"] = options.hp				# number of hyperthreading cores
 	args["m"] = options.memory			# number of megabytes of physical memory
 	args["s"] = options.frequency		# CPU frequency
 	args["h"] = 24						# pretend to run 24h/day
@@ -387,7 +389,7 @@ def merge_config_and_options(config, options):
 	# one line per attribute. Only the attr_to_copy list need to be updated
 	# when adding an option you want to copy from argument options to local.ini config.
 	attr_to_copy = ["username", "password", "worktype", "num_cache", "percent_limit",
-		"hostname", "cpu_model", "features", "frequency", "memory", "L1", "L2", "np"]
+		"hostname", "cpu_model", "features", "frequency", "memory", "L1", "L2", "np", "hp"]
 	updated = False
 	for attr in attr_to_copy:
 		# if "attr" has its default value in options, copy it from config
@@ -546,6 +548,7 @@ group.add_option("--memory", dest="memory", type="int", default=0, help="memory 
 group.add_option("--L1", dest="L1", type="int", default=8, help="L1 cache size, default: %default")
 group.add_option("--L2", dest="L2", type="int", default=512, help="L2 cache size, default: %default")
 group.add_option("--np", dest="np", type="int", default=1, help="number of processors, default: %default")
+group.add_option("--hp", dest="hp", type="int", default=0, help="number of hyperthreading cores (0 is unknown), default: %default")
 parser.add_option_group(group)
 
 (options, args) = parser.parse_args()
