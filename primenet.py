@@ -501,10 +501,20 @@ def update_progress():
 	result = send_request(guid, args)
 	if result is None:
 		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
-	elif int(result["pnErrorResult"]) != 0:
+	elif int(result["pnErrorResult"]) != primenet_api.ERROR_OK:
+		# TODO: treat more errors correctly in all send_request callers
+		# primenet_api.ERROR_SERVER_BUSY
+		# retry later
+
+		# primenet_api.ERROR_UNREGISTERED_CPU
+		# primenet_api.ERROR_STALE_CPU_INFO
+		# run --register
+		#
+		# primenet_api.ERROR_INVALID_ASSIGNMENT_KEY
+		# primenet_api.ERROR_WORK_NO_LONGER_NEEDED
+		# drop the assignment
 		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
 		debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
-		debug_print(result, file=sys.stderr)
 	else:
 		debug_print("Update correctly send to server")
 	return percent, time_left
@@ -555,12 +565,19 @@ def submit_one_line_v5(sendline, guid, ar):
 	args["r"] = result_type							# result type
 	args["d"] = 1									# done: 0 for no closing is used for partial results
 	args["n"] = ar['exponent']
-	if result_type == primenet_api.PRIMENET_AR_LL_RESULT:
+	if result_type in (primenet_api.PRIMENET_AR_LL_RESULT, primenet_api.PRIMENET_AR_LL_PRIME):
+		if result_type == primenet_api.PRIMENET_AR_LL_RESULT:
 			args["rd"] = ar['res64']
+		if 'shift-count' in ar:
+			args['sc'] = ar['shift-count']
+		if 'error-code' in ar:
+			args["ec"] = ar['error-code']
 	elif result_type in (primenet_api.PRIMENET_AR_PRP_RESULT, primenet_api.PRIMENET_AR_PRP_PRIME):
 		args.update({"A": 1, "b": 2, "c": -1})
 		if result_type == primenet_api.PRIMENET_AR_PRP_RESULT:
 			args["rd"] = ar['res64']
+		if 'error-code' in ar:
+			args["ec"] = ar['error-code']
 		if 'known-factors' in ar:
 			args['nkf'] = len(ar['known-factors'])
 		args["base"] = ar['worktype'][4:]	# worktype == PRP-base
@@ -570,12 +587,8 @@ def submit_one_line_v5(sendline, guid, ar):
 			args['sc'] = ar['shift-count']
 		if 'errors' in ar:
 			args['gbz'] = 1
-	if 'error-code' in ar:
-		args["ec"] = ar['error-code']
 	args['fftlen'] = ar['fft-length']
 	result = send_request(guid, args)
-	#result = None
-	print(args)
 	if result is None:
 		debug_print("ERROR while submitting result on mersenne.org: assignment_id={0}".format(aid), file=sys.stderr)
 		# if this happens, the submission can be retried
