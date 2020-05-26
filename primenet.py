@@ -521,7 +521,6 @@ def update_progress():
 
 def submit_one_line(sendline):
 	"""Submit one line"""
-	debug_print("Submitting\n" + sendline)
 	try:
 		ar = json.loads(sendline)
 		is_json = True
@@ -556,6 +555,7 @@ def submit_one_line_v5(sendline, guid, ar):
 	"""Submit one result line using V5 API, will be attributed to the computed identified by guid"""
 	# JSON is required because assignment_id is necessary in that case
 	# and it is not present in old output format.
+	debug_print("Submitting using V5 API\n" + sendline)
 	aid = ar['aid']
 	result_type = get_result_type(ar)
 	args = primenet_v5_bargs.copy()
@@ -616,6 +616,7 @@ def submit_one_line_v5(sendline, guid, ar):
 
 def submit_one_line_manually(sendline):
 	"""Submit results using manual testing, will be attributed to "Manual Testing" in mersenne.org"""
+	debug_print("Submitting using manual results\n" + sendline)
 	try:
 		post_data = urlencode({"data": sendline}).encode('utf-8')
 		r = primenet.open(primenet_baseurl + "manual_result/default.php", post_data)
