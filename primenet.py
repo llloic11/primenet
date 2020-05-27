@@ -42,6 +42,8 @@ from optparse import OptionParser, OptionGroup
 from hashlib import sha256
 import json
 
+import platform
+
 # More python3-backward-incompatibility-breakage-related foo - thanks to Gord Palameta for the workaround:
 #import cookielib
 #import urllib
@@ -433,6 +435,7 @@ def merge_config_and_options(config, options):
 		attr_val = getattr(options, attr)
 		if attr_val == parser.defaults[attr] \
 		   and config.has_option("primenet", attr):
+			# If no option is given and the option exists in local.ini, take it from local.ini
 			new_val = config.get("primenet", attr)
 			# config file values are always str()
 			# they need to be converted to the expected type from options
@@ -441,6 +444,8 @@ def merge_config_and_options(config, options):
 			setattr(options, attr, new_val)
 		elif attr_val is not None and (not config.has_option("primenet", attr) \
 		   or config.get("primenet", attr) != str(attr_val)):
+			# If an option is given (even default value) and it is not already
+			# identical in local.ini, update local.ini
 			debug_print("update local.ini with {0}={1}".format(attr, attr_val))
 			config.set("primenet", attr, str(attr_val))
 			updated = True
@@ -687,8 +692,8 @@ parser.add_option("-L", "--percent_limit", dest="percent_limit", type="int", def
 parser.add_option("-t", "--timeout", dest="timeout", type="int", default=60*60*6, help="Seconds to wait between network updates, default %default [6 hours]. Use 0 for a single update without looping.")
 
 group = OptionGroup(parser, "Registering Options: send to mersenne.org when registering, visible in CPUs in the website.")
-group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website. This requires giving --hostname to identify the instance")
-group.add_option("--hostname", dest="hostname", help="Hostname name for mersenne.org")
+group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website.")
+group.add_option("--hostname", dest="hostname", default=platform.node()[:20], help="Hostname name for mersenne.org, default: %default")
 group.add_option("-c", "--cpu_model", dest="cpu_model", default="cpu.unknown", help="CPU model, defautl: %default")
 group.add_option("--features", dest="features", default="", help="CPU features, default '%default'")
 group.add_option("--frequency", dest="frequency", type="int", default=100, help="CPU frequency in MHz, default: %default")
@@ -780,6 +785,7 @@ if options.features is not None and len(options.features) > 64:
 
 # write back local.ini if necessary
 if config_updated:
+	debug_print("write local.ini")
 	config_write(config)
 
 if options.register:
