@@ -24,7 +24,33 @@ def add_secure_v5_args(args, guid, salt=None):
 	# Note that ss and sh args MUST be the last ones in the url, in this order
 	return args+"sh="+sh
 
+def SEC1(p):
+	"""
+	>>> SEC1(10388359)
+	'A49D230E'
+	"""
+	ans = p%27951 + p%88311 + (((p%19019 + p%63111)&0xffff) <<16)
+	return "{:08X}".format(ans%0xffffffff)
+
+# SEC3(157257439)=E55A1685
+# SEC3(173084057)=7D4D7FD1
+
+def SEC2(shift_count,error_count,res64,p):
+	"""
+	>>> SEC2(43751873,0,0x5388B3DB11E4A27C,52935359)
+	'8B37F9C1'
+	>>> SEC2(27224212,0,0x8D1346B59440C81D,46481819)
+	'F50E12E8'
+	>>> SEC2(66890488,0,0xCAF1457F2C31A6D5,81686569)
+	'F187246E,,00000000,'
+	"""
+	high32 = res64>>32
+	low32 = res64&0xffffffff
+	a0 = shift_count+error_count+high32+low32
+	a1 = p%4219 + p%91631 + ((p%15923+p%62071)<<16)
+	ans = a0^a1
+	return "{:08X}".format(ans%0xffffffff)
+
 if __name__ == "__main__":
 	import doctest
 	doctest.testmod()
-
