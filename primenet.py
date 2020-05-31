@@ -694,7 +694,7 @@ parser.add_option("-t", "--timeout", dest="timeout", type="int", default=60*60*6
 
 group = OptionGroup(parser, "Registering Options: send to mersenne.org when registering, visible in CPUs in the website.")
 group.add_option("-r", "--register", action="store_true", dest="register", default=False, help="Register to mersenne.org, this allows sending regular updates and follow the progress on the website.")
-group.add_option("--hostname", dest="hostname", default=platform.node()[:20], help="Hostname name for mersenne.org, default: %default")
+group.add_option("-H", "--hostname", dest="hostname", default=platform.node()[:20], help="Hostname name for mersenne.org, default: %default")
 group.add_option("-c", "--cpu_model", dest="cpu_model", default="cpu.unknown", help="CPU model, defautl: %default")
 group.add_option("--features", dest="features", default="", help="CPU features, default '%default'")
 group.add_option("--frequency", dest="frequency", type="int", default=100, help="CPU frequency in MHz, default: %default")
