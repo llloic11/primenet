@@ -698,7 +698,7 @@ group.add_option("--hostname", dest="hostname", default=platform.node()[:20], he
 group.add_option("-c", "--cpu_model", dest="cpu_model", default="cpu.unknown", help="CPU model, defautl: %default")
 group.add_option("--features", dest="features", default="", help="CPU features, default '%default'")
 group.add_option("--frequency", dest="frequency", type="int", default=100, help="CPU frequency in MHz, default: %default")
-group.add_option("--memory", dest="memory", type="int", default=0, help="memory size in MB, default: %default")
+group.add_option("-m", "--memory", dest="memory", type="int", default=0, help="memory size in MB, default: %default")
 group.add_option("--L1", dest="L1", type="int", default=8, help="L1 cache size, default: %default")
 group.add_option("--L2", dest="L2", type="int", default=512, help="L2 cache size, default: %default")
 group.add_option("--np", dest="np", type="int", default=1, help="number of processors, default: %default")
