@@ -453,8 +453,9 @@ def merge_config_and_options(config, options):
 
 def update_progress():
 	w = readonly_list_file(workfile)
-
 	tasks = greplike(workpattern, w)
+	if not len(tasks): return # don't update if no worktodo
+
 	found = re.search(b'=\s*([0-9A-F]{32}),', tasks[0])
 	if found:
 		assignment_id = found.group(1).decode("ascii","ignore")
