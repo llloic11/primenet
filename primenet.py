@@ -53,20 +53,24 @@ try:
     import http.cookiejar as cookiejar
     from urllib.error import URLError, HTTPError
     from urllib.parse import urlencode
-    from urllib.request import build_opener, urlopen
+    from urllib.request import build_opener, install_opener, urlopen, HTTPHandler, HTTPSHandler
     from urllib.request import HTTPCookieProcessor
+    from urllib.response import addinfourl
 except ImportError:
     # Python2
     import cookielib as cookiejar
     from urllib2 import URLError, HTTPError
     from urllib import urlencode
-    from urllib2 import build_opener, urlopen
+    from urllib2 import build_opener, install_opener, urlopen, HTTPHandler, HTTPSHandler
     from urllib2 import HTTPCookieProcessor
+    from urllib2 import addinfourl
 
 try:
     from configparser import ConfigParser, Error as ConfigParserError
 except ImportError:
     from ConfigParser import ConfigParser, Error as ConfigParserError  # ver. < 3.0
+
+from io import BytesIO
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
 primenet_v5_bargs = {"px":"GIMPS", "v": 0.95}
@@ -248,6 +252,7 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
+# TODO: once the assignment is obtain, send an immediate update with time estimation
 def get_assignment(progress):
 	w = read_list_file(workfile)
 	if w == "locked":
@@ -451,6 +456,7 @@ def merge_config_and_options(config, options):
 			updated = True
 	return updated
 
+# TODO: send time estimation also for the other assignments, not only the first. Question, how to estimate the completion ? Use a coarse estimation...
 def update_progress():
 	w = readonly_list_file(workfile)
 	tasks = greplike(workpattern, w)
@@ -668,6 +674,60 @@ def submit_work():
 				sent.append(sendline)
 	write_list_file(sentfile, sent, "a")
 
+#######################################################################################################
+# Debug tools
+#######################################################################################################
+_req_count = 0
+def spy_http_open(req, super_method):
+	# super_method arg is http_open or https_open to be called
+	global _req_count
+	debug_filename = "request_{0}.txt".format(_req_count)
+	try:
+		with open(debug_filename, "w") as output:
+			_req_count += 1
+			print("{0} {1}".format(req.get_method(), req.get_full_url()), file=output)
+			for k,v in req.header_items():
+				print("{0}: {1}".format(k,v), file=output)
+			print('', file=output)
+			if req.data is not None:
+				print(req.data.decode('utf-8','replace'), file=output)
+			print('', file=output)
+			# TODO: intercept exceptions that can be raise by http_open and r.read() to log them ?
+			r = super_method(req)
+			# get header and data
+			print('HTTP/1.1 {0} {1}'.format(r.code, r.msg), file=output)
+			headers = r.info()
+			print(headers, file=output)
+			data = r.read()
+			print(data.decode('utf-8', 'replace'), file=output)
+			# And return a fake response
+			resp = addinfourl(BytesIO(data), headers, req.get_full_url())
+			resp.code = r.code
+			resp.msg = r.msg
+			return resp
+	except (IOError,OSError):
+		pass
+	return r
+# The double inheritance with object is necessary in Python2
+# to make the class a new style class and have super() works
+# see https://stackoverflow.com/a/18392639/3446843
+class SpyHTTPHandler(HTTPHandler, object):
+	#def __init__(self):
+	#	self._debuglevel = 2
+	def http_open(self, req):
+		return spy_http_open(req, super(SpyHTTPHandler, self).http_open)
+
+class SpyHTTPSHandler(HTTPSHandler, object):
+	def https_open(self, req):
+		return spy_http_open(req, super(SpyHTTPSHandler, self).https_open)
+
+
+#######################################################################################################
+#
+# Start main program here
+#
+#######################################################################################################
+
 parser = OptionParser(version="primenet.py 19.1", description=\
 """This program is used to fill worktodo.ini with assignments and send the results for Mlucas
 program. It also saves its configuration to local.ini file, so it is necessary to gives the arguments only the first time you call it. Arguments are recovered for local.ini if not given.
@@ -677,7 +737,7 @@ Then, without --register, it fetches assignment and send results to mersenne.org
 )
 
 # options not saved to local.ini
-parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Display debugging info")
+parser.add_option("-d", "--debug", action="count", dest="debug", default=False, help="Display debugging info")
 parser.add_option("-w", "--workdir", dest="workdir", default=".", help="Working directory with worktodo.ini and results.txt from mlucas, and local.ini created by this program. Default current directory")
 
 # all other options are saved to local.ini (except --register)
@@ -769,6 +829,14 @@ sendlimit = 3000 # TODO: enforce this limit
 # adapted from http://stackoverflow.com/questions/923296/keeping-a-session-in-python-while-making-http-requests
 primenet_cj = cookiejar.CookieJar()
 primenet = build_opener(HTTPCookieProcessor(primenet_cj))
+
+# If debug is requested
+
+if options.debug > 1:
+	debug_print("Enable spying url request and responses")
+	primenet = build_opener(HTTPCookieProcessor(primenet_cj), SpyHTTPHandler, SpyHTTPSHandler)
+	my_opener = build_opener(SpyHTTPHandler, SpyHTTPSHandler)
+	install_opener(my_opener)
 
 # load local.ini and update options
 config = config_read()
