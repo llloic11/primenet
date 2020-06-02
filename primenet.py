@@ -779,7 +779,15 @@ primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
 # If debug is requested
 
-if options.debug > 1:
+if options.debug == 3:
+	debug_print("Enable testing url request and responses")
+	from urllib_debug import TestHTTPHandler, TestHTTPSHandler
+	primenet = build_opener(HTTPCookieProcessor(primenet_cj), TestHTTPHandler, TestHTTPSHandler)
+	my_opener = build_opener(TestHTTPHandler, TestHTTPSHandler)
+	install_opener(my_opener)
+	from random import seed
+	seed(3)
+elif options.debug == 2:
 	debug_print("Enable spying url request and responses")
 	from urllib_debug import SpyHTTPHandler, SpyHTTPSHandler
 	primenet = build_opener(HTTPCookieProcessor(primenet_cj), SpyHTTPHandler, SpyHTTPSHandler)
@@ -849,3 +857,5 @@ while True:
 		break
 
 sys.exit(0)
+
+# vim: noexpandtab ts=4 sts=0 sw=0
