@@ -45,9 +45,6 @@ import json
 import platform
 
 # More python3-backward-incompatibility-breakage-related foo - thanks to Gord Palameta for the workaround:
-#import cookielib
-#import urllib
-#import urllib2
 try:
     # Python3
     import http.cookiejar as cookiejar
@@ -69,8 +66,6 @@ try:
     from configparser import ConfigParser, Error as ConfigParserError
 except ImportError:
     from ConfigParser import ConfigParser, Error as ConfigParserError  # ver. < 3.0
-
-from io import BytesIO
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
 primenet_v5_bargs = {"px":"GIMPS", "v": 0.95}
@@ -675,54 +670,6 @@ def submit_work():
 	write_list_file(sentfile, sent, "a")
 
 #######################################################################################################
-# Debug tools
-#######################################################################################################
-_req_count = 0
-def spy_http_open(req, super_method):
-	# super_method arg is http_open or https_open to be called
-	global _req_count
-	debug_filename = "request_{0}.txt".format(_req_count)
-	try:
-		with open(debug_filename, "w") as output:
-			_req_count += 1
-			print("{0} {1}".format(req.get_method(), req.get_full_url()), file=output)
-			for k,v in req.header_items():
-				print("{0}: {1}".format(k,v), file=output)
-			print('', file=output)
-			if req.data is not None:
-				print(req.data.decode('utf-8','replace'), file=output)
-			print('', file=output)
-			# TODO: intercept exceptions that can be raise by http_open and r.read() to log them ?
-			r = super_method(req)
-			# get header and data
-			print('HTTP/1.1 {0} {1}'.format(r.code, r.msg), file=output)
-			headers = r.info()
-			print(headers, file=output)
-			data = r.read()
-			print(data.decode('utf-8', 'replace'), file=output)
-			# And return a fake response
-			resp = addinfourl(BytesIO(data), headers, req.get_full_url())
-			resp.code = r.code
-			resp.msg = r.msg
-			return resp
-	except (IOError,OSError):
-		pass
-	return r
-# The double inheritance with object is necessary in Python2
-# to make the class a new style class and have super() works
-# see https://stackoverflow.com/a/18392639/3446843
-class SpyHTTPHandler(HTTPHandler, object):
-	#def __init__(self):
-	#	self._debuglevel = 2
-	def http_open(self, req):
-		return spy_http_open(req, super(SpyHTTPHandler, self).http_open)
-
-class SpyHTTPSHandler(HTTPSHandler, object):
-	def https_open(self, req):
-		return spy_http_open(req, super(SpyHTTPSHandler, self).https_open)
-
-
-#######################################################################################################
 #
 # Start main program here
 #
@@ -834,6 +781,7 @@ primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
 if options.debug > 1:
 	debug_print("Enable spying url request and responses")
+	from urllib_debug import SpyHTTPHandler, SpyHTTPSHandler
 	primenet = build_opener(HTTPCookieProcessor(primenet_cj), SpyHTTPHandler, SpyHTTPSHandler)
 	my_opener = build_opener(SpyHTTPHandler, SpyHTTPSHandler)
 	install_opener(my_opener)
