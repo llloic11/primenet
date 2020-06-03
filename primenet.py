@@ -289,7 +289,7 @@ def get_assignment(progress):
 
 	num_fetched = len(new_tasks)
 	if num_fetched > 0:
-		debug_print("Fetched " + str(num_fetched) + " assignments: " + str(new_tasks))
+		debug_print("Fetched {0} assignments: {1}".format(num_fetched, [ x.decode('utf-8','replace') for x in new_tasks ]))
 	write_list_file(workfile, new_tasks, "ab")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
