@@ -27,7 +27,7 @@ for name in *.in; do
 done
 
 # run the command with the args
-${PYTHON} ${SRC_DIR}/primenet.py $(cat args) -t 0 -ddd |& tee stdout.log
+${PYTHON} ${SRC_DIR}/primenet.py $(cat args) -t 0 -ddd |& tee stdout.log >/dev/null
 
 # check outputs
 EXIT=0
@@ -45,3 +45,4 @@ else
 fi
 
 exit $EXIT
+# vim: noexpandtab ts=4 sts=0 sw=0
