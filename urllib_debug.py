@@ -42,8 +42,7 @@ def spy_http_open(req, super_method):
 		with open(response_filename, "wt") as output:
 			# get header and data
 			print('HTTP/1.1 {0} {1}'.format(r.code, r.msg), file=output)
-			headers = '\n'.join( "{0}: {1}".format(k,v) for k,v in sorted(r.getheaders()) )
-			print(headers, '\n', file=output)
+			print(r.info(), file=output)
 			data = r.read()
 			print(data.decode('utf-8', 'replace'), file=output)
 			# And return a fake response
