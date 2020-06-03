@@ -79,7 +79,7 @@ else:
 		from ordereddict import OrderedDict
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
-primenet_v5_bargs = OrderedDict({"px":"GIMPS", "v": 0.95})
+primenet_v5_bargs = OrderedDict((("px", "GIMPS"), ("v", 0.95)))
 primenet_baseurl = "https://www.mersenne.org/"
 primenet_login = False
 
@@ -117,13 +117,6 @@ class primenet_api:
 	PRIMENET_AR_LL_PRIME		= 101	# LL result, Mersenne prime
 	PRIMENET_AR_PRP_RESULT		= 150	# PRP result, not prime
 	PRIMENET_AR_PRP_PRIME		= 151	# PRP result, probably prime
-
-def ass_generate(assignment):
-	output = ""
-	for key in assignment:
-		output += key + "=" + assignment[key] + "&"
-	# return output.rstrip("&")
-	return output
 
 def debug_print(text, file=sys.stdout):
 	if options.debug:
@@ -242,15 +235,16 @@ def primenet_fetch(num_to_get):
 	if not options.worktype in supported:
 		debug_print("Unsupported/unrecognized worktype = " + options.worktype)
 		return []
-	assignment = {"cores": "1",
-		"num_to_get": str(num_to_get),
-		"pref": options.worktype,
-		"exp_lo": "",
-		"exp_hi": "",
-	}
+	assignment = OrderedDict((
+		("cores","1"),
+		("num_to_get", num_to_get),
+		("pref", options.worktype),
+		("exp_lo", ""),
+		("exp_hi", ""),
+		("B1", "Get Assignments")
+	))
 	try:
-		# TODO: use urlencode
-		openurl = primenet_baseurl + "manual_assignment/?" + ass_generate(assignment) + "B1=Get+Assignments"
+		openurl = primenet_baseurl + "manual_assignment/?" + urlencode(assignment)
 		debug_print("Fetching work via URL = "+openurl)
 		r = primenet.open(openurl)
 		return greplike(workpattern, r.readlines())
@@ -289,7 +283,9 @@ def get_assignment(progress):
 
 	num_fetched = len(new_tasks)
 	if num_fetched > 0:
-		debug_print("Fetched {0} assignments: {1}".format(num_fetched, [ x.decode('utf-8','replace') for x in new_tasks ]))
+		debug_print("Fetched {0} assignments:".format(num_fetched))
+		for new_task in new_tasks:
+			debug_print("{0}".format(new_task.decode('utf-8','replace')))
 	write_list_file(workfile, new_tasks, "ab")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
@@ -837,9 +833,10 @@ if options.username is None or options.password is None:
 while True:
 	# Log in to primenet
 	try:
-		login_data = {"user_login": options.username,
-			"user_password": options.password,
-		}
+		login_data = OrderedDict((
+			("user_login", options.username),
+			("user_password", options.password),
+		))
 
 		# This makes a POST instead of GET
 		data = urlencode(login_data).encode('utf-8')
