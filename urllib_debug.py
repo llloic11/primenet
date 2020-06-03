@@ -91,33 +91,32 @@ def test_http_open(req, super_method):
 		with open(request_filename, "wt") as output:
 			_req_count += 1
 			save_request(req, output)
-		# TODO compare with expected value ?
-		# Built the response for the response file
-		with open(response_filename, "r") as response_file:
-			# get code and msg
-			http_version, code, msg = response_file.readline().rstrip().split(" ", 2)
-			code = int(code)
-			# read headers
-			headers = []
-			while True:
-				line = response_file.readline().rstrip()
-				if line == '': break
-				headers.append(line)
-			if sys.version_info[0] == 2:
-				# py2
-				headers = mimetools.Message(StringIO('\n'.join(headers)))
-			else:
-				# py3
-				headers = email.message_from_string('\n'.join(headers))
-			# read data
-			data = response_file.read().encode('utf-8')
-			# And return a fake response
-			resp = addinfourl(BytesIO(data), headers, req.get_full_url(), code=code)
-			resp.msg = msg
-			return resp
 	except (IOError,OSError):
 		pass
-	return r
+	# TODO compare with expected value ?
+	# Built the response for the response file
+	with open(response_filename, "r") as response_file:
+		# get code and msg
+		http_version, code, msg = response_file.readline().rstrip().split(" ", 2)
+		code = int(code)
+		# read headers
+		headers = []
+		while True:
+			line = response_file.readline().rstrip()
+			if line == '': break
+			headers.append(line)
+		if sys.version_info[0] == 2:
+			# py2
+			headers = mimetools.Message(StringIO('\n'.join(headers)))
+		else:
+			# py3
+			headers = email.message_from_string('\n'.join(headers))
+		# read data
+		data = response_file.read().encode('utf-8')
+		# And return a fake response
+		resp = addinfourl(BytesIO(data), headers, req.get_full_url(), code=code)
+		resp.msg = msg
+		return resp
 
 class TestHTTPHandler(HTTPHandler, object):
 	def http_open(self, req):
