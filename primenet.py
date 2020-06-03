@@ -265,7 +265,7 @@ def get_assignment(progress):
 	num_cache = int(options.num_cache)
 	if percent is not None and percent >= int(options.percent_limit):
 		num_cache += 1
-		debug_print("Progress of current assignment is {0} and bigger than limit ({1}), so num_cache is increased by one to {2}".format(percent, options.percent_limit, num_cache))
+		debug_print("Progress of current assignment is {0:.2f} and bigger than limit ({1}), so num_cache is increased by one to {2}".format(percent, options.percent_limit, num_cache))
 	elif time_left is not None and time_left <= max(3*options.timeout, 24*3600):
 		# use else if here is important,
 		# time_left and percent increase are exclusive (don't want to do += 2)
