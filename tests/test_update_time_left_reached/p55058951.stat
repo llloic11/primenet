@@ -1,0 +1,12 @@
+INFO: primary restart file p55058951 not found...looking for secondary...
+INFO: no restart file found...starting run from scratch.
+INFO: no restart file found...starting run from scratch.
+M55058951: using FFT length 3072K = 3145728 8-byte floats, initial residue shift count = 18715841
+ this gives an average   17.502769152323406 bits per digit
+Using complex FFT radices       192        16        16        32
+[2020-05-09 20:29:35] M55058951 Iter# = 54660000 [99.27% complete] clocks = 00:09:55.107 [ 5.5107 msec/iter] Res64: AFA0F42B5A29F8FB. AvgMaxErr = 0.105745703. MaxErr = 0.156250000. Residue shift count = 38081939.
+[2020-05-09 20:39:30] M55058951 Iter# = 54670000 [99.29% complete] clocks = 00:09:55.090 [ 5.5091 msec/iter] Res64: 9DDB7AE21FF0D75A. AvgMaxErr = 0.105868359. MaxErr = 0.156250000. Residue shift count = 46652625.
+[2020-05-09 20:49:26] M55058951 Iter# = 54680000 [99.31% complete] clocks = 00:09:55.058 [ 5.0059 msec/iter] Res64: C2C30403FF29C247. AvgMaxErr = 0.105832422. MaxErr = 0.156250000. Residue shift count = 15232108.
+[2020-05-09 20:59:21] M55058951 Iter# = 54690000 [99.33% complete] clocks = 00:09:55.076 [ 5.5077 msec/iter] Res64: AAA0E78CF4E29D6D. AvgMaxErr = 0.105887109. MaxErr = 0.156250000. Residue shift count = 39272275.
+[2020-05-09 21:09:17] M55058951 Iter# = 54700000 [99.35% complete] clocks = 00:09:55.370 [ 5.5370 msec/iter] Res64: 323B930899C21B5D. AvgMaxErr = 0.105693750. MaxErr = 0.156250000. Residue shift count = 33039277.
+[2020-05-09 21:19:18] M55058951 Iter# = 54710000 [99.37% complete] clocks = 00:10:01.036 [ 600.1037 msec/iter] Res64: 09AAE175F023FFC5. AvgMaxErr = 0.105959766. MaxErr = 0.156250000. Residue shift count = 13925212.
