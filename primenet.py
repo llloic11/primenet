@@ -67,10 +67,16 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser, Error as ConfigParserError  # ver. < 3.0
 
-try:
-	from collections import OrderedDict
-except ImportError:
-	from ordereddict import OrderedDict
+if sys.version_info[:2] >= (3,7):
+	# If is OK to use dict in 3.7+ because insertion order is garantied to be preserved
+	# Since it is also faster, it is better to use raw dict()
+	OrderedDict = dict
+else:
+	try:
+		from collections import OrderedDict
+	except ImportError:
+		# For python2.6 and before with don't have OrderedDict
+		from ordereddict import OrderedDict
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
 primenet_v5_bargs = OrderedDict({"px":"GIMPS", "v": 0.95})
@@ -403,7 +409,7 @@ def register_instance(guid):
 	return
 
 def config_read():
-	config = ConfigParser()
+	config = ConfigParser(dict_type=OrderedDict)
 	try:
 		config.read([localfile])
 	except ConfigParserError as e:
