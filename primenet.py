@@ -814,11 +814,11 @@ while True:
 			debug_print("ERROR: Login failed.")
 		else:
 			primenet_login = True
-			submit_work()
 	except URLError:
 		debug_print("Primenet URL open ERROR")
 
 	if primenet_login:
+		submit_work()
 		progress = update_progress()
 		get_assignment(progress)
 	if options.timeout <= 0:
