@@ -67,8 +67,13 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser, Error as ConfigParserError  # ver. < 3.0
 
+try:
+	from collections import OrderedDict
+except ImportError:
+	from ordereddict import OrderedDict
+
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
-primenet_v5_bargs = {"px":"GIMPS", "v": 0.95}
+primenet_v5_bargs = OrderedDict({"px":"GIMPS", "v": 0.95})
 primenet_baseurl = "https://www.mersenne.org/"
 primenet_login = False
 

@@ -72,11 +72,15 @@ class SpyHTTPSHandler(HTTPSHandler, object):
 # Tests tools
 #######################################################################################################
 # The idea is to store the request in request_%d.log and send the result from response_%d.log as a response
-# py2
-#import mimetools
-#from StringIO import StringIO
-# py3
-import email
+import sys
+if sys.version_info[0] == 2:
+	# py2
+	import mimetools
+	from StringIO import StringIO
+else:
+	# py3
+	import email
+
 def test_http_open(req, super_method):
 	# super_method arg is http_open or https_open to be called
 	global _req_count
@@ -99,10 +103,12 @@ def test_http_open(req, super_method):
 				line = response_file.readline().rstrip()
 				if line == '': break
 				headers.append(line)
-			# py2
-			#headers = mimetools.Message(StringIO('\n'.join(headers)))
-			# py3
-			headers = email.message_from_string('\n'.join(headers))
+			if sys.version_info[0] == 2:
+				# py2
+				headers = mimetools.Message(StringIO('\n'.join(headers)))
+			else:
+				# py3
+				headers = email.message_from_string('\n'.join(headers))
 			# read data
 			data = response_file.read().encode('utf-8')
 			# And return a fake response
