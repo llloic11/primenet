@@ -1,0 +1,1 @@
+-u llloic -p XXXX -T 101 -n 0 -L 85 -H testhostname -c ARM-Cortex-A72 --features=asimd --frequency 1954 -m 4096 --L1=128 --L2=1024 --np=1 --hp=23 -t 0

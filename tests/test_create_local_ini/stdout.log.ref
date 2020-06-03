@@ -1,0 +1,18 @@
+primenet.py: main loop: Enable testing url request and responses
+primenet.py: merge_config_and_options: update local.ini with username=llloic
+primenet.py: merge_config_and_options: update local.ini with password=XXXX
+primenet.py: merge_config_and_options: update local.ini with worktype=101
+primenet.py: merge_config_and_options: update local.ini with num_cache=0
+primenet.py: merge_config_and_options: update local.ini with percent_limit=85
+primenet.py: merge_config_and_options: update local.ini with hostname=testhostname
+primenet.py: merge_config_and_options: update local.ini with cpu_model=ARM-Cortex-A72
+primenet.py: merge_config_and_options: update local.ini with features=asimd
+primenet.py: merge_config_and_options: update local.ini with frequency=1954
+primenet.py: merge_config_and_options: update local.ini with memory=4096
+primenet.py: merge_config_and_options: update local.ini with L1=128
+primenet.py: merge_config_and_options: update local.ini with L2=1024
+primenet.py: merge_config_and_options: update local.ini with np=1
+primenet.py: merge_config_and_options: update local.ini with hp=23
+primenet.py: main loop: write local.ini
+primenet.py: submit_work: No complete results found to send.
+primenet.py: get_assignment: ./worktodo.ini already has 0 >= 0 entries, not getting new work

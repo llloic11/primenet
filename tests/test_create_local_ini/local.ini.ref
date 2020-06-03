@@ -1,0 +1,16 @@
+[primenet]
+username = llloic
+password = XXXX
+worktype = 101
+num_cache = 0
+percent_limit = 85
+hostname = testhostname
+cpu_model = ARM-Cortex-A72
+features = asimd
+frequency = 1954
+memory = 4096
+l1 = 128
+l2 = 1024
+np = 1
+hp = 23
+

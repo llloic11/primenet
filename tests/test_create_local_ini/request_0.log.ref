@@ -1,0 +1,6 @@
+POST https://www.mersenne.org/default.php
+Content-length: 36
+Content-type: application/x-www-form-urlencoded
+Host: www.mersenne.org
+
+user_login=llloic&user_password=XXXX
