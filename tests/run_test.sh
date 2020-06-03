@@ -32,11 +32,16 @@ ${PYTHON} ${SRC_DIR}/primenet.py $(cat args) -t 0 -ddd |& tee stdout.log
 # check outputs
 EXIT=0
 for name in *.ref; do
-	diff -q "$name" "$(basename "$name" .ref)"
-	EXIT=$(( $EXIT || $? ))
+	diff -q "$name" "$(basename "$name" .ref)" >/dev/null
+	EXITCODE=$?
+	[ $EXITCODE -eq 0 ] || echo diff "$name" "$(basename "$name" .ref)"
+	EXIT=$(( $EXIT || $EXITCODE ))
 done
 
 if [ $EXIT -eq 0 ]; then
 	cleanup
+else
+	echo "Test $DIR FAILED" 1>&2
 fi
+
 exit $EXIT
