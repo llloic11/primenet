@@ -152,27 +152,9 @@ def readonly_list_file(filename, mode="rb"):
 		return []
 
 def read_list_file(filename, mode="rb"):
-	# Used when we plan to write the new version, so use locking
-	lockfile = filename + ".lck"
-	try:
-		fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
-		os.close(fd)
-	# This python2-style exception decl gives a syntax error in python3:
-	# except OSError, e:
-	# https://stackoverflow.com/questions/11285313/try-except-as-error-in-python-2-5-python-3-x
-	# gives the fugly but portable-between-both-python2-and-python3 syntactical workaround:
-	except OSError:
-		_, e, _ = sys.exc_info()
-		if e.errno == 17:
-			return "locked"
-		else:
-			raise
 	return readonly_list_file(filename, mode=mode)
 
 def write_list_file(filename, l, mode="wb"):
-	# Assume we put the lock in upon reading the file, so we can
-	# safely write the file and remove the lock
-	lockfile = filename + ".lck"
 	# A "null append" is meaningful, as we can call this to clear the
 	# lockfile. In this case the main file need not be touched.
 	if not ( "a" in mode and len(l) == 0):
@@ -181,11 +163,6 @@ def write_list_file(filename, l, mode="wb"):
 		File = open(filename, mode)
 		File.write(content)
 		File.close()
-	os.remove(lockfile)
-
-def unlock_file(filename):
-	lockfile = filename + ".lck"
-	os.remove(lockfile)
 
 def primenet_fetch(num_to_get):
 	if not primenet_login:
@@ -255,9 +232,6 @@ def primenet_fetch(num_to_get):
 # TODO: once the assignment is obtain, send an immediate update with time estimation
 def get_assignment(progress):
 	w = read_list_file(workfile)
-	if w == "locked":
-		return "locked"
-
 	tasks = greplike(workpattern, w)
 	(percent, time_left) = None, None
 	if progress is not None and type(progress) == tuple:
@@ -275,12 +249,10 @@ def get_assignment(progress):
 
 	if num_to_get < 1:
 		debug_print(workfile + " already has " + str(len(tasks)) + " >= " + str(num_cache) + " entries, not getting new work")
-		# Must write something anyway to clear the lockfile
-		new_tasks = []
-	else:
-		debug_print("Fetching " + str(num_to_get) + " assignments")
-		new_tasks = primenet_fetch(num_to_get)
+		return
 
+	debug_print("Fetching " + str(num_to_get) + " assignments")
+	new_tasks = primenet_fetch(num_to_get)
 	num_fetched = len(new_tasks)
 	if num_fetched > 0:
 		debug_print("Fetched {0} assignments:".format(num_fetched))
@@ -651,9 +623,6 @@ def submit_one_line_manually(sendline):
 
 def submit_work():
 	results_send = read_list_file(sentfile, "r")
-	if results_send == "locked":
-		return "locked"
-
 	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
 	results = readonly_list_file(resultsfile, "r") # appended line by line, no lock needed
 	# EWM: Note that read_list_file does not need the file(s) to exist - nonexistent files simply yield 0-length rs-array entries.
@@ -667,13 +636,12 @@ def submit_work():
 
 	if len(results_send) == 0:
 		debug_print("No complete results found to send.")
-		# Don't just return here, files are still locked...
-	else:
-		# EWM: Switch to one-result-line-at-a-time submission to support error-message-on-submit handling:
-		for sendline in results_send:
-			is_sent = submit_one_line(sendline) 
-			if is_sent:
-				sent.append(sendline)
+		return
+	# EWM: Switch to one-result-line-at-a-time submission to support error-message-on-submit handling:
+	for sendline in results_send:
+		is_sent = submit_one_line(sendline)
+		if is_sent:
+			sent.append(sendline)
 	write_list_file(sentfile, sent, "a")
 
 #######################################################################################################
@@ -846,17 +814,13 @@ while True:
 			debug_print("ERROR: Login failed.")
 		else:
 			primenet_login = True
-			while submit_work() == "locked":
-				debug_print("Waiting for results file access...")
-				sleep(2)
+			submit_work()
 	except URLError:
 		debug_print("Primenet URL open ERROR")
 
 	if primenet_login:
 		progress = update_progress()
-		while get_assignment(progress) == "locked":
-			debug_print("Waiting for worktodo.ini access...")
-			sleep(2)
+		get_assignment(progress)
 	if options.timeout <= 0:
 		break
 	try:
