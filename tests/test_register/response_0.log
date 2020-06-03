@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Server: Microsoft-IIS/8.5
+X-Powered-By: PHP/7.1.10
+Date: Wed, 03 Jun 2020 19:49:20 GMT
+Connection: close
+Content-Length: 130
+ 
+pnErrorResult=0
+pnErrorDetail=SUCCESS
+g=f35e070dee566358efb717e2e790a404
+u=llloic_test
+un=Loic_test
+cn=testhostname
+od=0
+==END==
+
+

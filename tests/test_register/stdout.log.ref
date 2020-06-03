@@ -1,0 +1,7 @@
+primenet.py: main loop: Enable testing url request and responses
+primenet.py: merge_config_and_options: update local.ini with username=myuser_test
+primenet.py: merge_config_and_options: update local.ini with password=XYXYX
+primenet.py: merge_config_and_options: update local.ini with percent_limit=20
+primenet.py: merge_config_and_options: update local.ini with frequency=1234
+primenet.py: main loop: write local.ini
+GUID 216363698b529b4a97b750923ceb3ffd correctly registered

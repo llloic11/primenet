@@ -1,0 +1,1 @@
+-u myuser_test -p XYXYX -T 101 -n 0 -L 20 -H testhostname --frequency 1234 -t 0 --register

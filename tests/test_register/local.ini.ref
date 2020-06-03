@@ -1,0 +1,17 @@
+[primenet]
+username = myuser_test
+password = XYXYX
+worktype = 101
+num_cache = 0
+percent_limit = 20
+hostname = testhostname
+cpu_model = ARM-Cortex-A72
+features = asimd
+frequency = 1234
+memory = 4096
+l1 = 128
+l2 = 1024
+np = 1
+hp = 23
+guid = 216363698b529b4a97b750923ceb3ffd
+
