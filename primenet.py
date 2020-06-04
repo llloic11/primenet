@@ -119,13 +119,13 @@ class primenet_api:
 	PRIMENET_AR_PRP_PRIME		= 151	# PRP result, probably prime
 
 def debug_print(text, file=sys.stdout):
-	if options.debug:
+	if options.debug or file == sys.stderr:
 		caller_name = sys._getframe(1).f_code.co_name
 		if caller_name == '<module>':
 			caller_name = 'main loop'
 		caller_string = caller_name + ": "
 		print(progname + ": " + caller_string + str(text), file=file)
-		sys.stdout.flush()
+		file.flush()
 
 def greplike(pattern, l):
 	output = []
@@ -229,6 +229,7 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
+# TODO: remove usage of binary mode for reading files if it is possible to stay compatible between py2 and py3
 # TODO: once the assignment is obtain, send an immediate update with time estimation
 def get_assignment(progress):
 	w = read_list_file(workfile)
@@ -321,12 +322,12 @@ def send_request(guid, args):
 		# don't need to use primenet opener because this API doesn't have cookies
 		r = urlopen(primenet_v5_burl+url_args)
 	except HTTPError as e:
-		print("ERROR receiving answer to request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
-		print(e, file=sys.stderr)
+		debug_print("ERROR receiving answer to request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
+		debug_print(e, file=sys.stderr)
 		return None
 	except URLError as e:
-		print("ERROR connecting to server for request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
-		print(e, file=sys.stderr)
+		debug_print("ERROR connecting to server for request: "+str(primenet_v5_burl+url_args), file=sys.stderr)
+		debug_print(e, file=sys.stderr)
 		return None
 	return parse_v5_resp(r.read().decode("utf-8","replace"))
 
@@ -381,8 +382,8 @@ def config_read():
 	try:
 		config.read([localfile])
 	except ConfigParserError as e:
-		print("ERROR reading {0} file:".format(localfile), file=sys.stderr)
-		print(e, file=sys.stderr)
+		debug_print("ERROR reading {0} file:".format(localfile), file=sys.stderr)
+		debug_print(e, file=sys.stderr)
 	if not config.has_section("primenet"):
 		# Create the section to avoid having to test for it later
 		config.add_section("primenet")
@@ -462,8 +463,8 @@ def update_progress():
 	# Found eligible current-assignment in workfile and a matching p*.stat file with progress information
 	guid = get_guid(config)
 	if guid is None:
-		print("update_progress: Cannot update, the registration is not done", file=sys.stderr)
-		print("update_progress: Call the program with --register option", file=sys.stderr)
+		debug_print("update_progress: Cannot update, the registration is not done", file=sys.stderr)
+		debug_print("update_progress: Call the program with --register option", file=sys.stderr)
 		return percent, time_left
 
 	# Assignment Progress fields:
