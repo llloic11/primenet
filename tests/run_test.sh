@@ -22,7 +22,7 @@ cd $DIR
 
 cleanup
 # copy inputs
-for name in *.in; do
+for name in $( ls *.in 2>/dev/null ); do
 	cp "$name" "$(basename "$name" .in)"
 done
 
