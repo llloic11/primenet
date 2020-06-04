@@ -1,0 +1,8 @@
+primenet.py: main loop: Enable testing url request and responses
+primenet.py: submit_work: No complete results found to send.
+primenet.py: get_assignment: Fetching 3 assignments
+primenet.py: primenet_fetch: Fetching work via URL = https://www.mersenne.org/manual_assignment/?cores=1&num_to_get=3&pref=101&exp_lo=&exp_hi=&B1=Get+Assignments
+primenet.py: get_assignment: Fetched 2 assignments:
+primenet.py: get_assignment: DoubleCheck=B20365257590A285DF332272AAA128CD,55189031,74,1
+primenet.py: get_assignment: DoubleCheck=E8B0A60F4ADA8B4B2B19A113D4F3E550,55189037,74,1
+primenet.py: get_assignment: Error: Failed to obtain requested number of new assignments, 3 requested, 2 successfully retrieved
