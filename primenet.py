@@ -592,7 +592,7 @@ def submit_one_line_v5(sendline, guid, ar):
 		debug_print("ERROR while submitting result on mersenne.org: assignment_id={0}".format(aid), file=sys.stderr)
 		if int(result["pnErrorResult"]) is primenet_api.ERROR_UNREGISTERED_CPU:
 			# should register again and retry
-			debug_print("Please run --register again and retry", file=sys.stderr)
+			debug_print("ERROR UNREGISTERED CPU: Please remove guid line from local.ini, run with --register and retry", file=sys.stderr)
 			return False
 		elif int(result["pnErrorResult"]) is primenet_api.ERROR_INVALID_PARAMETER:
 			debug_print("INVALID PARAMETER: this is a bug in primenet.py, please notify the author", file=sys.stderr)
