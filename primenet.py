@@ -229,13 +229,13 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
-# TODO: once the assignment is obtain, send an immediate update with time estimation
+# TODO: once the assignment is obtained, send an immediate update with time estimation
 # TODO: send update for all assignments...
 def get_assignment(progress):
 	w = read_list_file(workfile)
 	tasks = greplike(workpattern, w)
 	(percent, time_left) = None, None
-	if progress is not None and type(progress) == tuple:
+	if progress is not None and type(progress) == tuple and len(progress) == 2:
 		(percent, time_left) = progress # unpack update_progress output
 	num_cache = int(options.num_cache)
 	if percent is not None and percent >= int(options.percent_limit):
