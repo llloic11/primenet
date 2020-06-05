@@ -10,6 +10,7 @@ usage () {
 EXIT=0
 if [ $# -lt 1 ]; then
 	for python in $PYTHONS; do
+		echo "$0 $python"
 		$0 $python
 		EXIT=$(( $EXIT || $? ))
 	done
@@ -22,7 +23,7 @@ if ! $python --version >&/dev/null; then
 	exit 0
 fi
 
-echo "$0 $python"
+echo "$( $python --version 2>&1 )"
 
 EXIT=0
 for testname in $( ls -d test_* ); do
