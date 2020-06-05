@@ -1,0 +1,7 @@
+primenet.py: main loop: Enable testing url request and responses
+primenet.py: submit_work: No complete results found to send.
+primenet.py: update_progress: type = DoubleCheck, assignment_id = 9DB0472B5DA39EB51D467740609A0CD1
+primenet.py: send_request: ERROR receiving answer to request: http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=ap&k=9DB0472B5DA39EB51D467740609A0CD1&p=0.0&d=86400&e=604800&c=0&stage=LL&g=07bd50dc0489bb4a44da5639df9889a8&ss=15595&sh=839E7F1623822F7B53D2AF584C9EAEA7
+primenet.py: send_request: HTTP Error 405: Resource Not Allowed
+primenet.py: update_progress: ERROR while updating on mersenne.org
+primenet.py: get_assignment: ./worktodo.ini already has 4 >= 3 entries, not getting new work

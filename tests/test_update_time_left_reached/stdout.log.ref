@@ -1,6 +1,6 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
-primenet.py: update_progress: assignment_id = E2C5A556F3E290454CC5CEECF2156B59
+primenet.py: update_progress: type = DoubleCheck, assignment_id = E2C5A556F3E290454CC5CEECF2156B59
 primenet.py: parse_stat_file: p:55058951 is 99.37% done
 primenet.py: parse_stat_file: Finish estimated in 0.0 days (used 5.5 msec/iter estimation)
 primenet.py: update_progress: Update correctly send to server

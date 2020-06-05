@@ -129,11 +129,10 @@ def debug_print(text, file=sys.stdout):
 
 def greplike(pattern, l):
 	output = []
-	regex = re.compile("(" + pattern + ")$")
 	for line in l:
-		s = regex.search(line)
+		s = pattern.search(line)
 		if s:
-			output.append(s.groups()[0])
+			output.append(s.group(0))
 	return output
 
 def num_to_fetch(l, targetsize):
@@ -438,16 +437,17 @@ def update_progress():
 	tasks = greplike(workpattern, w)
 	if not len(tasks): return # don't update if no worktodo
 
-	found = re.search('=\s*([0-9A-F]{32}),', tasks[0])
-	if found:
-		assignment_id = found.group(1)
-		debug_print("assignment_id = " + assignment_id)
-	else:
+	found = workpattern.search(tasks[0])
+	if not found:
 		# TODO: test this error
 		debug_print("Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
+
+	assignment_id = found.group(2)
+	is_prp = found.group(1) == "PRP"
+	debug_print("type = {0}, assignment_id = {1}".format(found.group(1), assignment_id))
+
 	found = tasks[0].split(",")
-	is_prp = tasks[0][:3] == "PRP"
 	idx = 3 if is_prp else 1
 	if len(found) > idx:
 		# Extract the subfield containing the exponent, whose position depends on the assignment type:
@@ -596,7 +596,7 @@ def submit_one_line_v5(sendline, guid, ar):
 			return False
 		elif int(result["pnErrorResult"]) is primenet_api.ERROR_INVALID_PARAMETER:
 			debug_print("INVALID PARAMETER: this is a bug in primenet.py, please notify the author", file=sys.stderr)
-			debug_print(result, file=sys.stderr)
+			debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
 			return False
 		else:
 			# In all other error case, the submission must not be retried
@@ -744,9 +744,9 @@ sentfile = os.path.join(workdir, "results_sent.txt")
 # Anyhow, based on that I modified the grep pattern to work around the weirdness, by appending .* to the pattern, thus
 # changing things to "look for 3 comma-separated nonnegative ints somewhere in the assignment, followed by anything",
 # also now to specifically look for a 32-hexchar assignment ID preceding such a triplet, and to allow whitespace around
-# the =. The latter bit is not  needed based on current server assignment format, just a personal aesthetic bias of mine:
+# the =. The latter bit is not needed based on current server assignment format, just a personal aesthetic bias of mine:
 #
-workpattern = "(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
+workpattern = re.compile("(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]{32})(,[0-9]+){3}.*")
 
 # mersenne.org limit is about 4 KB; stay on the safe side
 sendlimit = 3000 # TODO: enforce this limit
