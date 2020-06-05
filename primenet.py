@@ -540,6 +540,7 @@ def get_result_type(ar):
 
 def submit_one_line_v5(sendline, guid, ar):
 	"""Submit one result line using V5 API, will be attributed to the computed identified by guid"""
+	"""Return False if the submission should be retried"""
 	# JSON is required because assignment_id is necessary in that case
 	# and it is not present in old output format.
 	debug_print("Submitting using V5 API\n" + sendline)
@@ -560,7 +561,7 @@ def submit_one_line_v5(sendline, guid, ar):
 		if 'error-code' in ar:
 			args["ec"] = ar['error-code']
 	elif result_type in (primenet_api.PRIMENET_AR_PRP_RESULT, primenet_api.PRIMENET_AR_PRP_PRIME):
-		args.update({"A": 1, "b": 2, "c": -1})
+		args.update((("A", 1), ("b", 2), ("c", -1)))
 		if result_type == primenet_api.PRIMENET_AR_PRP_RESULT:
 			args["rd"] = ar['res64']
 		if 'error-code' in ar:
@@ -592,11 +593,11 @@ def submit_one_line_v5(sendline, guid, ar):
 			debug_print("Please run --register again and retry", file=sys.stderr)
 			return False
 		elif int(result["pnErrorResult"]) is primenet_api.ERROR_INVALID_PARAMETER:
-			debug_print("INVALID PARAMEER: this is a bug in primenet.py, please notify the author", file=sys.stderr)
+			debug_print("INVALID PARAMETER: this is a bug in primenet.py, please notify the author", file=sys.stderr)
 			debug_print(result, file=sys.stderr)
 			return False
 		else:
-			# In that case, the submission must not be retried
+			# In all other error case, the submission must not be retried
 			debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
 			return True
 	return True
@@ -630,7 +631,6 @@ def submit_work():
 	results = filter(mersenne_find, results)	# remove nonsubmittable lines from list of possibles
 
 	results_send = [line for line in results if line not in results_send]	# if a line was previously submitted, discard
-	results_send = list(set(results_send))	# In case resultsfile contained duplicate lines for some reason
 
 	# Only for new results, to be appended to results_sent
 	sent = []
