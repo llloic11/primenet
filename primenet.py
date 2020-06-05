@@ -129,8 +129,9 @@ def debug_print(text, file=sys.stdout):
 
 def greplike(pattern, l):
 	output = []
+	regex = re.compile("(" + pattern + ")$")
 	for line in l:
-		s = re.search("(" + pattern + ")$", line)
+		s = regex.search(line)
 		if s:
 			output.append(s.groups()[0])
 	return output
