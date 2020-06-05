@@ -130,7 +130,7 @@ def debug_print(text, file=sys.stdout):
 def greplike(pattern, l):
 	output = []
 	for line in l:
-		s = re.search(b"(" + pattern + b")$", line)
+		s = re.search("(" + pattern + ")$", line)
 		if s:
 			output.append(s.groups()[0])
 	return output
@@ -140,7 +140,7 @@ def num_to_fetch(l, targetsize):
 	num_needed = targetsize - num_existing
 	return max(num_needed, 0)
 
-def readonly_list_file(filename, mode="rb"):
+def readonly_list_file(filename, mode="r"):
 	# Used when there is no intention to write the file back, so don't
 	# check or write lockfiles. Also returns a single string, no list.
 	try:
@@ -151,10 +151,10 @@ def readonly_list_file(filename, mode="rb"):
 	except (IOError,OSError):
 		return []
 
-def read_list_file(filename, mode="rb"):
+def read_list_file(filename, mode="r"):
 	return readonly_list_file(filename, mode=mode)
 
-def write_list_file(filename, l, mode="wb"):
+def write_list_file(filename, l, mode="w"):
 	# A "null append" is meaningful, as we can call this to clear the
 	# lockfile. In this case the main file need not be touched.
 	if not ( "a" in mode and len(l) == 0):
@@ -224,13 +224,13 @@ def primenet_fetch(num_to_get):
 		openurl = primenet_baseurl + "manual_assignment/?" + urlencode(assignment)
 		debug_print("Fetching work via URL = "+openurl)
 		r = primenet.open(openurl)
-		return greplike(workpattern, r.readlines())
+		return greplike(workpattern, [ line.decode('utf-8','replace') for line in r.readlines() ] )
 	except URLError:
 		debug_print("URL open error at primenet_fetch")
 		return []
 
-# TODO: remove usage of binary mode for reading files if it is possible to stay compatible between py2 and py3
 # TODO: once the assignment is obtain, send an immediate update with time estimation
+# TODO: send update for all assignments...
 def get_assignment(progress):
 	w = read_list_file(workfile)
 	tasks = greplike(workpattern, w)
@@ -258,8 +258,8 @@ def get_assignment(progress):
 	if num_fetched > 0:
 		debug_print("Fetched {0} assignments:".format(num_fetched))
 		for new_task in new_tasks:
-			debug_print("{0}".format(new_task.decode('utf-8','replace')))
-	write_list_file(workfile, new_tasks, "ab")
+			debug_print("{0}".format(new_task))
+	write_list_file(workfile, new_tasks, "a")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
 
@@ -279,7 +279,7 @@ def parse_stat_file(p):
 	statfile = 'p' + str(p) + '.stat'
 	w = readonly_list_file(statfile) # appended line by line, no lock needed
 	found = 0
-	regex = re.compile(b"Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
+	regex = re.compile("Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
 	times_per_iter = []
 	# get the 5 most recent Iter line
 	for line in reversed(w):
@@ -290,7 +290,7 @@ def parse_stat_file(p):
 				iteration = int(res.group(1))
 			time_per_iter = float(res.group(2))
 			unit = res.group(3)
-			if unit == b"sec":
+			if unit == "sec":
 				time_per_iter *= 1000
 			times_per_iter.append(time_per_iter)
 			if found == 5: break
@@ -437,15 +437,16 @@ def update_progress():
 	tasks = greplike(workpattern, w)
 	if not len(tasks): return # don't update if no worktodo
 
-	found = re.search(b'=\s*([0-9A-F]{32}),', tasks[0])
+	found = re.search('=\s*([0-9A-F]{32}),', tasks[0])
 	if found:
-		assignment_id = found.group(1).decode("ascii","ignore")
+		assignment_id = found.group(1)
 		debug_print("assignment_id = " + assignment_id)
 	else:
+		# TODO: test this error
 		debug_print("Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
 		return
-	found = tasks[0].split(b",")
-	is_prp = tasks[0][:3] == b"PRP"
+	found = tasks[0].split(",")
+	is_prp = tasks[0][:3] == "PRP"
 	idx = 3 if is_prp else 1
 	if len(found) > idx:
 		# Extract the subfield containing the exponent, whose position depends on the assignment type:
@@ -624,9 +625,9 @@ def submit_one_line_manually(sendline):
 				# bad results (e.g. previously-submitted duplicates) every time the script executes.
 
 def submit_work():
-	results_send = read_list_file(sentfile, "r")
+	results_send = read_list_file(sentfile)
 	# Only submit completed work, i.e. the exponent must not exist in worktodo file any more
-	results = readonly_list_file(resultsfile, "r") # appended line by line, no lock needed
+	results = readonly_list_file(resultsfile) # appended line by line, no lock needed
 	# EWM: Note that read_list_file does not need the file(s) to exist - nonexistent files simply yield 0-length rs-array entries.
 	results = filter(mersenne_find, results)	# remove nonsubmittable lines from list of possibles
 
@@ -744,7 +745,7 @@ sentfile = os.path.join(workdir, "results_sent.txt")
 # also now to specifically look for a 32-hexchar assignment ID preceding such a triplet, and to allow whitespace around
 # the =. The latter bit is not  needed based on current server assignment format, just a personal aesthetic bias of mine:
 #
-workpattern = b"(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
+workpattern = "(DoubleCheck|Test|PRP)\s*=\s*([0-9A-F]){32}(,[0-9]+){3}.*"
 
 # mersenne.org limit is about 4 KB; stay on the safe side
 sendlimit = 3000 # TODO: enforce this limit
