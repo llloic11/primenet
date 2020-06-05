@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Server: Microsoft-IIS/8.5
+X-Powered-By: PHP/7.1.10
+Date: Fri, 05 Jun 2020 21:19:11 GMT
+Connection: close
+Content-Length: 103
+
+pnErrorResult=0
+pnErrorDetail=PRP result matches previously verified M8419067 --
+CPU credit is 0.2553 GHz-days.
+
+==END==
+
+
