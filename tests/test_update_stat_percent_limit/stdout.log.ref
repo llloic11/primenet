@@ -1,6 +1,6 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
-primenet.py: update_progress: assignment_id = E2C5A556F3E290454CC5CEECF2156B59
+primenet.py: update_progress: assignment_id = 45AC1002292118571B6B993D6C61B52A
 primenet.py: parse_stat_file: p:55058951 is 90.29% done
 primenet.py: parse_stat_file: Finish estimated in 3.7 days (used 59.0 msec/iter estimation)
 primenet.py: update_progress: Update correctly send to server
