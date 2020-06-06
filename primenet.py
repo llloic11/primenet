@@ -466,7 +466,7 @@ def update_progress():
 	guid = get_guid(config)
 	if guid is None:
 		debug_print("update_progress: Cannot update, the registration is not done", file=sys.stderr)
-		debug_print("update_progress: Call the program with --register option", file=sys.stderr)
+		debug_print("update_progress: Call primenet.py with --register option", file=sys.stderr)
 		return percent, time_left
 
 	# Assignment Progress fields:
