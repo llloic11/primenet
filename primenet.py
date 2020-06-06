@@ -280,30 +280,25 @@ def parse_stat_file(p):
 	w = readonly_list_file(statfile) # appended line by line, no lock needed
 	found = 0
 	regex = re.compile("Iter# = (.+?) .*?(\d+\.\d+) (m?sec)/iter")
-	times_per_iter = []
+	list_usec_per_iter = []
 	# get the 5 most recent Iter line
 	for line in reversed(w):
 		res = regex.search(line)
 		if res:
 			found += 1
+			# keep the last iteration to compute the percent of progress
 			if found == 1:
 				iteration = int(res.group(1))
-			time_per_iter = float(res.group(2))
+			usec_per_iter = float(res.group(2))
 			unit = res.group(3)
 			if unit == "sec":
-				time_per_iter *= 1000
-			times_per_iter.append(time_per_iter)
+				usec_per_iter *= 1000
+			list_usec_per_iter.append(usec_per_iter)
 			if found == 5: break
-	if found == 0: return 0, None # progress is 0 percent, but don't know the estimated time yet
-	# keep the last iteration to compute the percent of progress
-	percent = 100*float(iteration)/float(p)
-	debug_print("p:{0} is {1:.2f}% done".format(p, percent))
-	# take the min of the last grepped lines
-	time_per_iter = median_low(times_per_iter)
-	iteration_left = p - iteration
-	time_left = int(time_per_iter * iteration_left / 1000)
-	debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(time_left/3600/24, time_per_iter))
-	return percent, time_left
+	if found == 0: return 0, None # iteration is 0, but don't know the estimated speed yet
+	# take the media of the last grepped lines
+	usec_per_iter = median_low(list_usec_per_iter)
+	return iteration, usec_per_iter
 
 def parse_v5_resp(r):
 	ans = dict()
@@ -436,38 +431,47 @@ def update_progress():
 	w = readonly_list_file(workfile)
 	tasks = greplike(workpattern, w)
 	if not len(tasks): return # don't update if no worktodo
+	aid, is_prp, percent, time_left = get_progress_assignment(tasks[0])
+	send_progress(aid, is_prp, percent, time_left)
+	return percent, time_left
 
-	found = workpattern.search(tasks[0])
+def get_progress_assignment(task):
+	found = workpattern.search(task)
 	if not found:
 		# TODO: test this error
-		debug_print("Unable to extract valid Primenet assignment ID from first entry in " + workfile + ": " + str(tasks[0]))
+		debug_print("ERROR: Unable to extract valid Primenet assignment ID from entry in " + workfile + ": " + str(tasks[0]), file=sys.stderr)
 		return
-
 	assignment_id = found.group(2)
 	is_prp = found.group(1) == "PRP"
 	debug_print("type = {0}, assignment_id = {1}".format(found.group(1), assignment_id))
-
-	found = tasks[0].split(",")
+	found = task.split(",")
 	idx = 3 if is_prp else 1
-	if len(found) > idx:
-		# Extract the subfield containing the exponent, whose position depends on the assignment type:
-		p = int(found[idx])
-		found = parse_stat_file(p)
-		if found:
-			percent, time_left = found
-		else:
-			debug_print("Unable to find or parse p"+str(p)+".stat file corresponding to first entry in " + workfile + ": " + str(tasks[0]))
-			return
-	else:
-		debug_print("Unable to extract valid exponent substring from first entry in " + workfile + ": " + str(tasks[0]))
-		return
+	if len(found) <= idx:
+		debug_print("Unable to extract valid exponent substring from entry in " + workfile + ": " + str(task))
+		return None, None
+	# Extract the subfield containing the exponent, whose position depends on the assignment type:
+	p = int(found[idx])
+	iteration, usec_per_iter = parse_stat_file(p)
+	percent, time_left = compute_progress(p, iteration, usec_per_iter)
+	return assignment_id, is_prp, percent, time_left
 
+def compute_progress(p, iteration, usec_per_iter):
+	percent = 100*float(iteration)/float(p)
+	if usec_per_iter is None:
+		return percent, None
+	debug_print("p:{0} is {1:.2f}% done".format(p, percent))
+	iteration_left = p - iteration
+	time_left = int(usec_per_iter * iteration_left / 1000)
+	debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(time_left/3600/24, usec_per_iter))
+	return percent, time_left
+
+def send_progress(assignment_id, is_prp, percent, time_left):
 	# Found eligible current-assignment in workfile and a matching p*.stat file with progress information
 	guid = get_guid(config)
 	if guid is None:
-		debug_print("update_progress: Cannot update, the registration is not done", file=sys.stderr)
-		debug_print("update_progress: Call primenet.py with --register option", file=sys.stderr)
-		return percent, time_left
+		debug_print("Cannot update, the registration is not done", file=sys.stderr)
+		debug_print("Call primenet.py with --register option", file=sys.stderr)
+		return
 
 	# Assignment Progress fields:
 	# g= the machine's GUID (32 chars, assigned by Primenet on 1st-contact from a given machine, stored in 'guid=' entry of local.ini file of rundir)
@@ -506,7 +510,7 @@ def update_progress():
 		debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
 	else:
 		debug_print("Update correctly send to server")
-	return percent, time_left
+	return
 
 def submit_one_line(sendline):
 	"""Submit one line"""

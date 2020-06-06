@@ -1,9 +1,9 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
-primenet.py: update_progress: type = DoubleCheck, assignment_id = E2C5A556F3E290454CC5CEECF2156B59
-primenet.py: parse_stat_file: p:55058951 is 99.37% done
-primenet.py: parse_stat_file: Finish estimated in 0.0 days (used 5.5 msec/iter estimation)
-primenet.py: update_progress: Update correctly send to server
+primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = E2C5A556F3E290454CC5CEECF2156B59
+primenet.py: compute_progress: p:55058951 is 99.37% done
+primenet.py: compute_progress: Finish estimated in 0.0 days (used 5.5 msec/iter estimation)
+primenet.py: send_progress: Update correctly send to server
 primenet.py: get_assignment: Time_left is 1922 and smaller than limit (86400), so num_cache is increased by one to 4
 primenet.py: get_assignment: Fetching 1 assignments
 primenet.py: primenet_fetch: Fetching work via URL = https://www.mersenne.org/manual_assignment/?cores=1&num_to_get=1&pref=101&exp_lo=&exp_hi=&B1=Get+Assignments
