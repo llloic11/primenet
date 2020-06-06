@@ -14,4 +14,5 @@ l1 = 8
 l2 = 512
 np = 1
 hp = 0
+usec_per_iter = 5.51
 

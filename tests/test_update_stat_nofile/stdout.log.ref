@@ -1,5 +1,7 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
 primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = 0D8738E44772802C88860336AC2C84EE
+primenet.py: compute_progress: p:54698717 is 0.00% done
+primenet.py: compute_progress: Finish estimated in 56.6 days (used 89.5 msec/iter estimation)
 primenet.py: send_progress: Update correctly send to server
 primenet.py: get_assignment: ./worktodo.ini already has 4 >= 3 entries, not getting new work

@@ -67,6 +67,8 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser, Error as ConfigParserError  # ver. < 3.0
 
+from collections import namedtuple
+
 if sys.version_info[:2] >= (3,7):
 	# If is OK to use dict in 3.7+ because insertion order is garantied to be preserved
 	# Since it is also faster, it is better to use raw dict()
@@ -427,12 +429,22 @@ def merge_config_and_options(config, options):
 	return updated
 
 # TODO: send time estimation also for the other assignments, not only the first. Question, how to estimate the completion ? Use a coarse estimation...
+Assignment = namedtuple('Assignment', "id p is_prp iteration usec_per_iter")
 def update_progress():
 	w = readonly_list_file(workfile)
 	tasks = greplike(workpattern, w)
 	if not len(tasks): return # don't update if no worktodo
-	aid, is_prp, percent, time_left = get_progress_assignment(tasks[0])
-	send_progress(aid, is_prp, percent, time_left)
+	config_updated = False
+	assignment = get_progress_assignment(tasks[0])
+	usec_per_iter = assignment.usec_per_iter
+	if usec_per_iter is not None:
+		config.set("primenet", "usec_per_iter", "{0:.2f}".format(usec_per_iter))
+		config_updated = True
+	elif config.has_option("primenet", "usec_per_iter"):
+		usec_per_iter = float(config.get("primenet", "usec_per_iter"))
+	percent, time_left = compute_progress(assignment.p, assignment.iteration, usec_per_iter)
+	send_progress(assignment.id, assignment.is_prp, percent, time_left)
+	config_write(config)
 	return percent, time_left
 
 def get_progress_assignment(task):
@@ -452,8 +464,7 @@ def get_progress_assignment(task):
 	# Extract the subfield containing the exponent, whose position depends on the assignment type:
 	p = int(found[idx])
 	iteration, usec_per_iter = parse_stat_file(p)
-	percent, time_left = compute_progress(p, iteration, usec_per_iter)
-	return assignment_id, is_prp, percent, time_left
+	return Assignment(assignment_id, p, is_prp, iteration, usec_per_iter)
 
 def compute_progress(p, iteration, usec_per_iter):
 	percent = 100*float(iteration)/float(p)
