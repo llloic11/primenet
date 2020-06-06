@@ -231,7 +231,6 @@ def primenet_fetch(num_to_get):
 		debug_print("URL open error at primenet_fetch")
 		return []
 
-# TODO: once the assignment is obtained, send an immediate update with time estimation
 def get_assignment(progress):
 	w = read_list_file(workfile)
 	tasks = greplike(workpattern, w)
@@ -251,7 +250,7 @@ def get_assignment(progress):
 
 	if num_to_get < 1:
 		debug_print(workfile + " already has " + str(len(tasks)) + " >= " + str(num_cache) + " entries, not getting new work")
-		return
+		return 0
 
 	debug_print("Fetching " + str(num_to_get) + " assignments")
 	new_tasks = primenet_fetch(num_to_get)
@@ -263,6 +262,7 @@ def get_assignment(progress):
 	write_list_file(workfile, new_tasks, "a")
 	if num_fetched < num_to_get:
 		debug_print("Error: Failed to obtain requested number of new assignments, " + str(num_to_get) + " requested, " + str(num_fetched) + " successfully retrieved")
+	return num_fetched
 
 def mersenne_find(line, complete=True):
 	# Pre-v19 old-style HRF-formatted result used "Program:..."; starting w/v19 JSON-formatted result uses "program",
@@ -859,7 +859,12 @@ while True:
 	if primenet_login:
 		submit_work()
 		progress = update_progress()
-		get_assignment(progress)
+		got = get_assignment(progress)
+		if got > 0:
+			debug_print("Redo progress update to update the just obtained assignment")
+			# Since assignment are obtain by manual assignment, it is important to update them
+			# to mark them as belonging to the current computer.
+			update_progress()
 	if options.timeout <= 0:
 		break
 	try:

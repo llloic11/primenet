@@ -6,3 +6,12 @@ primenet.py: get_assignment: Fetched 2 assignments:
 primenet.py: get_assignment: DoubleCheck=B20365257590A285DF332272AAA128CD,55189031,74,1
 primenet.py: get_assignment: DoubleCheck=E8B0A60F4ADA8B4B2B19A113D4F3E550,55189037,74,1
 primenet.py: get_assignment: Error: Failed to obtain requested number of new assignments, 3 requested, 2 successfully retrieved
+primenet.py: main loop: Redo progress update to update the just obtained assignment
+primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = B20365257590A285DF332272AAA128CD
+primenet.py: update_progress: p:55189031 is 0.00% done
+primenet.py: update_progress: Finish estimated in 57.1 days (used 89.5 msec/iter estimation)
+primenet.py: send_progress: Update correctly send to server
+primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = E8B0A60F4ADA8B4B2B19A113D4F3E550
+primenet.py: update_progress: p:55189037 is 0.00% done
+primenet.py: update_progress: Finish estimated in 114.3 days (used 89.5 msec/iter estimation)
+primenet.py: send_progress: Update correctly send to server

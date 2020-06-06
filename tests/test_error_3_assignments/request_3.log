@@ -1,0 +1,3 @@
+GET http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=ap&k=E8B0A60F4ADA8B4B2B19A113D4F3E550&p=0.0&d=86400&e=9873317&c=0&stage=LL&g=07bd50dc0489bb4a44da5639df9889a8&ss=38839&sh=760DDAB2D674872CC132E066580C053F
+Host: v5.mersenne.org
+

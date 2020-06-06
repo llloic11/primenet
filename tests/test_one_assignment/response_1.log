@@ -1,13 +1,1 @@
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=UTF-8
-Server: Microsoft-IIS/8.5
-X-Powered-By: PHP/7.1.10
-Date: Tue, 02 Jun 2020 19:52:54 GMT
-Connection: close
-Content-Length: 47 
-
-pnErrorResult=0
-pnErrorDetail=SUCCESS
-==END==
-
-
+response_5.log
