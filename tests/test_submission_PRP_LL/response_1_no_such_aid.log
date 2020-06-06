@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 146
+Content-Type: text/html; charset=UTF-8
+Date: Wed, 03 Jun 2020 12:12:10 GMT
+Server: Microsoft-IIS/8.5
+X-Powered-By: PHP/7.1.10 
+
+pnErrorResult=43
+pnErrorDetail=ap: no such assignment key, GUID: 07bd50dc0489bb4a44da5639df9889a8, key: 5FFFA71F8C4551B8A519C1E68E8F62F1
+==END==
+
+

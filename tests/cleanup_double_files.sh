@@ -9,7 +9,7 @@ for nom in $(find -name *.ref -type f ) ; do
     fi
 done
 
-sha256sum $(find test_* -type f ) | uniq --check-chars=64 -D | (read prev_hash prev_name;
+sha256sum $(find test_* -type f ) |sort| uniq --check-chars=64 -D | (read prev_hash prev_name;
     while read hash name; do
         if [ $hash == $prev_hash ]; then
             if [ $(dirname $name) == $(dirname $prev_name) ]; then
