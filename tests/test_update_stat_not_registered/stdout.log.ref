@@ -1,6 +1,13 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
 primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = 0D8738E44772802C88860336AC2C84EE
+primenet.py: update_progress: p:54698717 is 0.00% done
+primenet.py: update_progress: Finish cannot be estimated
+primenet.py: send_progress: Cannot update, the registration is not done
+primenet.py: send_progress: Call primenet.py with --register option
+primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = 5FFFA71F8C4551B8A519C1E68E8F62F1
+primenet.py: update_progress: p:56601163 is 0.00% done
+primenet.py: update_progress: Finish cannot be estimated
 primenet.py: send_progress: Cannot update, the registration is not done
 primenet.py: send_progress: Call primenet.py with --register option
 primenet.py: get_assignment: ./worktodo.ini already has 2 >= 1 entries, not getting new work

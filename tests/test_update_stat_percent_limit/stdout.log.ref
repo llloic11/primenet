@@ -1,8 +1,8 @@
 primenet.py: main loop: Enable testing url request and responses
 primenet.py: submit_work: No complete results found to send.
 primenet.py: get_progress_assignment: type = PRP, assignment_id = 45AC1002292118571B6B993D6C61B52A
-primenet.py: compute_progress: p:55058951 is 90.29% done
-primenet.py: compute_progress: Finish estimated in 3.7 days (used 59.0 msec/iter estimation)
+primenet.py: update_progress: p:55058951 is 90.29% done
+primenet.py: update_progress: Finish estimated in 3.7 days (used 59.0 msec/iter estimation)
 primenet.py: send_progress: Update correctly send to server
-primenet.py: get_assignment: Progress of current assignment is 90.29 and bigger than limit (90), so num_cache is increased by one to 4
-primenet.py: get_assignment: ./worktodo.ini already has 9 >= 4 entries, not getting new work
+primenet.py: get_assignment: Progress of current assignment is 90.29 and bigger than limit (90), so num_cache is increased by one to 1
+primenet.py: get_assignment: ./worktodo.ini already has 1 >= 1 entries, not getting new work

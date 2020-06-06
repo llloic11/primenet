@@ -1,1 +1,18 @@
-../test_one_assignment/local.ini.in
+[primenet]
+username = llloic
+password = XXXXXXXXXX
+guid = 07bd50dc0489bb4a44da5639df9889a8
+worktype = 101
+num_cache = 1
+percent_limit = 90
+hostname = pavuc
+cpu_model = cpu.unknown
+features = 
+frequency = 100
+memory = 4096
+l1 = 8
+l2 = 512
+np = 1
+hp = 0
+usec_per_iter = 89.45
+

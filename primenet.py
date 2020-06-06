@@ -232,7 +232,6 @@ def primenet_fetch(num_to_get):
 		return []
 
 # TODO: once the assignment is obtained, send an immediate update with time estimation
-# TODO: send update for all assignments...
 def get_assignment(progress):
 	w = read_list_file(workfile)
 	tasks = greplike(workpattern, w)
@@ -428,24 +427,49 @@ def merge_config_and_options(config, options):
 			updated = True
 	return updated
 
-# TODO: send time estimation also for the other assignments, not only the first. Question, how to estimate the completion ? Use a coarse estimation...
 Assignment = namedtuple('Assignment', "id p is_prp iteration usec_per_iter")
 def update_progress():
 	w = readonly_list_file(workfile)
 	tasks = greplike(workpattern, w)
 	if not len(tasks): return # don't update if no worktodo
 	config_updated = False
+	# Treat the first assignment. Only this one is used to save the usec_per_iter
+	# The idea is that the first assignment is having a .stat file with correct values
+	# Most of the time, a later assignment would not have a .stat file to obtain information,
+	# but if it has, it may come from an other computer if the user moved the files, and so
+	# it doesn't have revelant values for speed estimation.
+	# Using usec_per_iter from one p to another is a good estimation if both p are close enougth
+	# if there is big gap, it will be other or under estimated.
+	# Any idea for a better estimation of assignment duration when only p and type (LL or PRP) is known ?
 	assignment = get_progress_assignment(tasks[0])
 	usec_per_iter = assignment.usec_per_iter
 	if usec_per_iter is not None:
 		config.set("primenet", "usec_per_iter", "{0:.2f}".format(usec_per_iter))
 		config_updated = True
 	elif config.has_option("primenet", "usec_per_iter"):
+		# If not speed available, get it from the local.ini file
 		usec_per_iter = float(config.get("primenet", "usec_per_iter"))
 	percent, time_left = compute_progress(assignment.p, assignment.iteration, usec_per_iter)
+	debug_print("p:{0} is {1:.2f}% done".format(assignment.p, percent))
+	if time_left is None:
+		debug_print("Finish cannot be estimated")
+	else:
+		debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(time_left/3600/24, usec_per_iter))
 	send_progress(assignment.id, assignment.is_prp, percent, time_left)
+	# Do the other assignment accumulating the time_lefts
+	cur_time_left = time_left
+	for task in tasks[1:]:
+		assignment = get_progress_assignment(task)
+		percent, time_left = compute_progress(assignment.p, assignment.iteration, usec_per_iter)
+		debug_print("p:{0} is {1:.2f}% done".format(assignment.p, percent))
+		if time_left is None:
+			debug_print("Finish cannot be estimated")
+		else:
+			cur_time_left += time_left
+			debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(cur_time_left/3600/24, usec_per_iter))
+		send_progress(assignment.id, assignment.is_prp, percent, cur_time_left)
 	config_write(config)
-	return percent, time_left
+	return percent, cur_time_left
 
 def get_progress_assignment(task):
 	found = workpattern.search(task)
@@ -470,14 +494,11 @@ def compute_progress(p, iteration, usec_per_iter):
 	percent = 100*float(iteration)/float(p)
 	if usec_per_iter is None:
 		return percent, None
-	debug_print("p:{0} is {1:.2f}% done".format(p, percent))
 	iteration_left = p - iteration
 	time_left = int(usec_per_iter * iteration_left / 1000)
-	debug_print("Finish estimated in {0:.1f} days (used {1:.1f} msec/iter estimation)".format(time_left/3600/24, usec_per_iter))
 	return percent, time_left
 
 def send_progress(assignment_id, is_prp, percent, time_left):
-	# Found eligible current-assignment in workfile and a matching p*.stat file with progress information
 	guid = get_guid(config)
 	if guid is None:
 		debug_print("Cannot update, the registration is not done", file=sys.stderr)
