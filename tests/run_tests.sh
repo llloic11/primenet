@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PYTHONS="python2.6 python2.7 python3.3 python3.4 python3.6 python3.7 python3.9"
+PYTHON2S="python2.6 python2.7"
+PYTHON3S=$( for v in `seq 1 9`; do echo python3.$v; done )
+PYTHONS="$PYTHON2S $PYTHON3S"
 
 usage () {
 	echo "usage: $0 [python]" 1>&2
