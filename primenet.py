@@ -36,12 +36,9 @@ import sys
 import os.path
 import re
 from time import sleep
-import os
-import math
 from optparse import OptionParser, OptionGroup
 from hashlib import sha256
 import json
-
 import platform
 
 # More python3-backward-incompatibility-breakage-related foo - thanks to Gord Palameta for the workaround:
@@ -50,17 +47,15 @@ try:
     import http.cookiejar as cookiejar
     from urllib.error import URLError, HTTPError
     from urllib.parse import urlencode
-    from urllib.request import build_opener, install_opener, urlopen, HTTPHandler, HTTPSHandler
+    from urllib.request import build_opener, install_opener, urlopen
     from urllib.request import HTTPCookieProcessor
-    from urllib.response import addinfourl
 except ImportError:
     # Python2
     import cookielib as cookiejar
     from urllib2 import URLError, HTTPError
     from urllib import urlencode
-    from urllib2 import build_opener, install_opener, urlopen, HTTPHandler, HTTPSHandler
+    from urllib2 import build_opener, install_opener, urlopen
     from urllib2 import HTTPCookieProcessor
-    from urllib2 import addinfourl
 
 try:
     from configparser import ConfigParser, Error as ConfigParserError
