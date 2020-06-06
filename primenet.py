@@ -77,7 +77,7 @@ else:
 	try:
 		from collections import OrderedDict
 	except ImportError:
-		# For python2.6 and before with don't have OrderedDict
+		# For python2.6 and before which don't have OrderedDict
 		from ordereddict import OrderedDict
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
