@@ -307,6 +307,8 @@ def parse_v5_resp(r):
 from primenet_v5_hashing import add_secure_v5_args
 def send_request(guid, args):
 	args["g"] = guid
+	# to mimic mprime, it is necessary to add safe='"{}:,' argument to urlencode, in
+	# particular to encode JSON in result submission. But safe is not supported by python2...
 	url_args = urlencode(args)
 	url_args = add_secure_v5_args(url_args, guid)
 	try:
@@ -493,13 +495,13 @@ def compute_progress(p, iteration, usec_per_iter):
 	time_left = int(usec_per_iter * iteration_left / 1000)
 	return percent, time_left
 
-def send_progress(assignment_id, is_prp, percent, time_left):
+def send_progress(assignment_id, is_prp, percent, time_left, retry_count=0):
 	guid = get_guid(config)
 	if guid is None:
 		debug_print("Cannot update, the registration is not done", file=sys.stderr)
 		debug_print("Call primenet.py with --register option", file=sys.stderr)
 		return
-
+	if retry_count > 5: return
 	# Assignment Progress fields:
 	# g= the machine's GUID (32 chars, assigned by Primenet on 1st-contact from a given machine, stored in 'guid=' entry of local.ini file of rundir)
 	#
@@ -518,25 +520,38 @@ def send_progress(assignment_id, is_prp, percent, time_left):
 	# stage= LL in this case, although an LL test may be doing TF or P-1 work first so it's possible to be something besides LL
 	if not is_prp:
 		args["stage"] = "LL"
+	retry = False
 	result = send_request(guid, args)
 	if result is None:
 		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
-	elif int(result["pnErrorResult"]) != primenet_api.ERROR_OK:
-		# TODO: treat more errors correctly in all send_request callers
-		# primenet_api.ERROR_SERVER_BUSY
-		# retry later
-
-		# primenet_api.ERROR_UNREGISTERED_CPU
-		# primenet_api.ERROR_STALE_CPU_INFO
-		# run --register
-		#
-		# primenet_api.ERROR_INVALID_ASSIGNMENT_KEY
-		# primenet_api.ERROR_WORK_NO_LONGER_NEEDED
-		# drop the assignment
-		debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
-		debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
+		# Try again
+		retry = True
 	else:
-		debug_print("Update correctly send to server")
+		rc = int(result["pnErrorResult"])
+		if rc == primenet_api.ERROR_OK:
+			debug_print("Update correctly send to server")
+		elif rc == primenet_api.ERROR_STALE_CPU_INFO:
+			debug_print("STALE CPU INFO ERROR: re-send computer update")
+			# rerun --register
+			register_instance(guid)
+			retry = True
+		elif rc == primenet_api.ERROR_UNREGISTERED_CPU:
+			debug_print("UNREGISTERED CPU ERROR: pick a new GUID and register again")
+			# corrupted GUI: change GUID, and rerun --register
+			register_instance(None)
+			retry = True
+		elif rc == primenet_api.ERROR_SERVER_BUSY:
+			retry = True
+		else:
+			# TODO: treat more errors correctly in all send_request callers
+			# primenet_api.ERROR_INVALID_ASSIGNMENT_KEY
+			# primenet_api.ERROR_WORK_NO_LONGER_NEEDED
+			# drop the assignment
+			debug_print("ERROR while updating on mersenne.org", file=sys.stderr)
+			debug_print("Code: "+str(rc), file=sys.stderr)
+			debug_print("Reason: "+result["pnErrorDetail"], file=sys.stderr)
+	if retry:
+		return send_progress(assignment_id, is_prp, percent, time_left, retry_count+1)
 	return
 
 def submit_one_line(sendline):

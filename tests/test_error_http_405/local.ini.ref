@@ -1,1 +1,17 @@
-local.ini.in
+[primenet]
+username = llloic
+password = XXXXXXXXXX
+guid = 795b929e9a9a80fdea7b5bf55eb561a4
+worktype = 101
+num_cache = 1
+percent_limit = 90
+hostname = testhostname
+cpu_model = cpu.unknown
+features = 
+frequency = 100
+memory = 4096
+l1 = 8
+l2 = 512
+np = 1
+hp = 0
+

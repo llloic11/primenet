@@ -1,11 +1,11 @@
 [primenet]
 username = llloic
 password = XXXXXXXXXX
-guid = 07bd50dc0489bb4a44da5639df9889a8
+guid = f35e070dee566358efb717e2e790a404
 worktype = 101
 num_cache = 1
 percent_limit = 90
-hostname = pavuc
+hostname = testhostname
 cpu_model = cpu.unknown
 features = 
 frequency = 100

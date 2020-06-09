@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Server: Microsoft-IIS/8.5
+X-Powered-By: PHP/7.1.10
+Date: Tue, 09 Jun 2020 11:41:39 GMT
+Connection: close
+Content-Length: 116
+
+
+pnErrorResult=30
+pnErrorDetail=Unregistered CPU data
+==END==
+
+
