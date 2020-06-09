@@ -803,6 +803,13 @@ primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
 # If debug is requested
 
+if options.debug > 1:
+	# if urllib_debug is not present, don't try to activate the debugging
+	try:
+		import urllib_debug
+	except ImportError:
+		options.debug = 1
+
 if options.debug == 3:
 	debug_print("Enable testing url request and responses")
 	from urllib_debug import TestHTTPHandler, TestHTTPSHandler
