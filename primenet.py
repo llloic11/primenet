@@ -73,7 +73,11 @@ else:
 		from collections import OrderedDict
 	except ImportError:
 		# For python2.6 and before which don't have OrderedDict
-		from ordereddict import OrderedDict
+		try:
+			from ordereddict import OrderedDict
+		except ImportError:
+			# Tests will not work correctly but it doesn't affect the functionnality
+			OrderedDict = dict
 
 primenet_v5_burl = "http://v5.mersenne.org/v5server/?"
 primenet_v5_bargs = OrderedDict((("px", "GIMPS"), ("v", 0.95)))
