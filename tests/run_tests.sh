@@ -27,6 +27,8 @@ fi
 
 echo "$( $python --version 2>&1 )"
 
+cd $(dirname $BASH_SOURCE)
+
 EXIT=0
 for testname in $( ls -d test_* ); do
 	./run_test.sh $testname $python
