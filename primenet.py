@@ -308,13 +308,13 @@ def parse_v5_resp(r):
 		ans[option]=value
 	return ans
 
-from primenet_v5_hashing import add_secure_v5_args
 def send_request(guid, args):
 	args["g"] = guid
 	# to mimic mprime, it is necessary to add safe='"{}:,' argument to urlencode, in
 	# particular to encode JSON in result submission. But safe is not supported by python2...
 	url_args = urlencode(args)
-	url_args = add_secure_v5_args(url_args, guid)
+	# Only really usefull for t = "uc", not for "ap", is it for "ar" ?
+	url_args += "&ss=19191919&sh=ABCDABCDABCDABCDABCDABCDABCDABCD"
 	try:
 		# don't need to use primenet opener because this API doesn't have cookies
 		r = urlopen(primenet_v5_burl+url_args)
