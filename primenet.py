@@ -735,7 +735,7 @@ parser.add_option("-p", "--password", dest="password", help="Primenet password")
 # -t is reserved for timeout, instead use -T for assignment-type preference:
 parser.add_option("-T", "--worktype", dest="worktype", default="101", help="Worktype code, default is 101 for double-check LL, alternatively 100 (smallest available first-time LL), 102 (world-record-sized first-time LL), 104 (100M digit number to LL test - not recommended), 150 (smallest available first-time PRP), 151 (double-check PRP), 152 (world-record-sized first-time PRP), 153 (100M digit number to PRP test - not recommended)")
 
-parser.add_option("-n", "--num_cache", dest="num_cache", type="int", default=2, help="Number of assignments to cache, default: %default")
+parser.add_option("-n", "--num_cache", dest="num_cache", type="int", default=1, help="Number of assignments to cache, default: %default")
 parser.add_option("-L", "--percent_limit", dest="percent_limit", type="int", default=90, help="Add one to num_cache when current assignment is already done at this percentage, default: %default")
 
 parser.add_option("-t", "--timeout", dest="timeout", type="int", default=60*60*6, help="Seconds to wait between network updates, default %default [6 hours]. Use 0 for a single update without looping.")
