@@ -351,9 +351,9 @@ def register_instance(guid):
 	args["hd"] = hardware_id			# 32 hex char (128 bits)
 	args["c"] = options.cpu_model[:64]	# CPU model (len between 8 and 64)
 	args["f"] = options.features[:64]	# CPU option (like asimd, max len 64)
-	args["L1"] = options.L1				# L1 cache size in Bytes
-	args["L2"] = options.L2				# L2 cache size in Bytes
-										# if smaller or equal then 256,
+	args["L1"] = options.L1				# L1 cache size in KBytes
+	args["L2"] = options.L2				# L2 cache size in KBytes
+										# if smaller or equal to 256,
 										# server refuses to gives LL assignment
 	args["np"] = options.np				# number of cores
 	args["hp"] = options.hp				# number of hyperthreading cores
@@ -371,7 +371,20 @@ def register_instance(guid):
 	elif int(result["pnErrorResult"]) != 0:
 		parser.error("Error while registering on mersenne.org\nReason: "+result["pnErrorDetail"])
 	config_write(config, guid=guid)
-	print("GUID {guid} correctly registered".format(guid=guid))
+	print("GUID {guid} correctly registered with the following features:".format(guid=guid))
+	print("Username: {0}".format(options.username))
+	print("Hostname: {0}".format(options.hostname))
+	print("CPU model: {0}".format(options.cpu_model))
+	print("CPU features: {0}".format(options.features))
+	print("CPU L1 cache size: {0}kB".format(options.L1))
+	print("CPU L2 cache size: {0}kB".format(options.L2))
+	print("CPU cores: {0}".format(options.np))
+	print("CPU thread per core: {0}".format(options.hp))
+	print("CPU frequency: {0}MHz".format(options.frequency))
+	print("Memory size: {0}MB".format(options.memory))
+	print("If you want to change the value, please rerun with the corresponding options or edit the local.ini file and rerun with --register option")
+	print("You can see the result in this page:")
+	print("https://www.mersenne.org/editcpu/?g={guid}".format(guid=guid))
 	return
 
 def config_read():
