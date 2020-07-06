@@ -1,3 +1,3 @@
-GET http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=uc&a=Linux64%2CMlucas%2Cv19&wg=&hd=0325f2dd0290da3fb65d5be4a9b88796&c=ARM-Cortex-A72&f=asimd&L1=128&L2=1024&np=1&hp=23&m=4096&s=1234&h=24&r=1000&u=myuser_test&cn=testhostname&g=216363698b529b4a97b750923ceb3ffd&ss=24245&sh=9EF188A8F0428B3C09E88E2E330216D6
+GET http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=uc&a=Linux64%2CMlucas%2Cv19&wg=&hd=0325f2dd0290da3fb65d5be4a9b88796&c=ARM-Cortex-A72&f=asimd&L1=128&L2=1024&np=1&hp=23&m=4096&s=1234&h=24&r=1000&u=myuser_test&cn=testhostname&g=216363698b529b4a97b750923ceb3ffd&ss=19191919&sh=ABCDABCDABCDABCDABCDABCDABCDABCD
 Host: v5.mersenne.org
 

@@ -3,12 +3,38 @@ primenet.py: submit_work: No complete results found to send.
 primenet.py: get_progress_assignment: type = DoubleCheck, assignment_id = 5FFFA71F8C4551B8A519C1E68E8F62F1
 primenet.py: update_progress: p:56601163 is 0.00% done
 primenet.py: update_progress: Finish cannot be estimated
-primenet.py: send_request: ERROR receiving answer to request: http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=ap&k=5FFFA71F8C4551B8A519C1E68E8F62F1&p=0.0&d=86400&e=604800&c=0&stage=LL&g=f35e070dee566358efb717e2e790a404&ss=15595&sh=9AC3318E4B85C4B8187FA53DDC233BE4
+primenet.py: send_request: ERROR receiving answer to request: http://v5.mersenne.org/v5server/?px=GIMPS&v=0.95&t=ap&k=5FFFA71F8C4551B8A519C1E68E8F62F1&p=0.0&d=86400&e=604800&c=0&stage=LL&g=f35e070dee566358efb717e2e790a404&ss=19191919&sh=ABCDABCDABCDABCDABCDABCDABCDABCD
 primenet.py: send_request: HTTP Error 405: Resource Not Allowed
 primenet.py: send_progress: ERROR while updating on mersenne.org
 primenet.py: send_progress: STALE CPU INFO ERROR: re-send computer update
-GUID f35e070dee566358efb717e2e790a404 correctly registered
+GUID f35e070dee566358efb717e2e790a404 correctly registered with the following features:
+Username: llloic
+Hostname: testhostname
+CPU model: cpu.unknown
+CPU features: 
+CPU L1 cache size: 8kB
+CPU L2 cache size: 512kB
+CPU cores: 1
+CPU thread per core: 0
+CPU frequency: 100MHz
+Memory size: 4096MB
+If you want to change the value, please rerun with the corresponding options or edit the local.ini file and rerun with --register option
+You can see the result in this page:
+https://www.mersenne.org/editcpu/?g=f35e070dee566358efb717e2e790a404
 primenet.py: send_progress: UNREGISTERED CPU ERROR: pick a new GUID and register again
-GUID 795b929e9a9a80fdea7b5bf55eb561a4 correctly registered
+GUID 216363698b529b4a97b750923ceb3ffd correctly registered with the following features:
+Username: llloic
+Hostname: testhostname
+CPU model: cpu.unknown
+CPU features: 
+CPU L1 cache size: 8kB
+CPU L2 cache size: 512kB
+CPU cores: 1
+CPU thread per core: 0
+CPU frequency: 100MHz
+Memory size: 4096MB
+If you want to change the value, please rerun with the corresponding options or edit the local.ini file and rerun with --register option
+You can see the result in this page:
+https://www.mersenne.org/editcpu/?g=216363698b529b4a97b750923ceb3ffd
 primenet.py: send_progress: Update correctly send to server
 primenet.py: get_assignment: ./worktodo.ini already has 1 >= 1 entries, not getting new work

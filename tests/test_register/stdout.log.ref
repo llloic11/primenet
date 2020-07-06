@@ -4,4 +4,17 @@ primenet.py: merge_config_and_options: update local.ini with password=XYXYX
 primenet.py: merge_config_and_options: update local.ini with percent_limit=20
 primenet.py: merge_config_and_options: update local.ini with frequency=1234
 primenet.py: main loop: write local.ini
-GUID 216363698b529b4a97b750923ceb3ffd correctly registered
+GUID 216363698b529b4a97b750923ceb3ffd correctly registered with the following features:
+Username: myuser_test
+Hostname: testhostname
+CPU model: ARM-Cortex-A72
+CPU features: asimd
+CPU L1 cache size: 128kB
+CPU L2 cache size: 1024kB
+CPU cores: 1
+CPU thread per core: 23
+CPU frequency: 1234MHz
+Memory size: 4096MB
+If you want to change the value, please rerun with the corresponding options or edit the local.ini file and rerun with --register option
+You can see the result in this page:
+https://www.mersenne.org/editcpu/?g=216363698b529b4a97b750923ceb3ffd
