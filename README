@@ -1,6 +1,8 @@
 primenet.py:
 To get assignment and send results, you can use primenet.py python script.
 
+Note: primenet.py should support python versions from 2.7 to 3.9.
+
 primenet.py should be run in the same directory as Mlucas binary and they both work together like this:
 - primenet.py will get new assignments if necessary and append to worktodo.ini file
 - Mlucas reads the worktodo.ini file and runs the first assignment
@@ -10,7 +12,7 @@ primenet.py should be run in the same directory as Mlucas binary and they both w
 primenet.py can register the computer to mersenne.org web site, so that you can track each computer separately in https://www.mersenne.org/cpus/.
 
 To use this feature, you have to launch primenet.py with --register option at least once:
-$ ./primenet.py --register --username XXXX --password XXXX
+$ ./primenet.py --register --username [uid] --password [pwd]
 Currently, only the hostname is automatically detected, if you want to give hardware details from your computer, you can add the corresponding options like this (this is correct for a RaspberryPi4 2GB):
 $ ./primenet.py --register --cpu_model "ARM Cortex A-72" --features "asimd" --frequency "1500" --L1 32 --L2 512 --memory 2000 --np 4 --hp 0
 
@@ -18,7 +20,7 @@ primenet.py is saving the options in local.ini file, so that you only have to gi
 You can also modifiy the local.ini file by hand to change the options.
 You can relaunch primenet.py with --register option at any time to update the values to mersenne.org.
 
-Then, it is advised to run primenet.py in foreground (not as a daemon) at least once to check that it works correctly:
+Then, you should run primenet.py in foreground (not as a daemon) at least once to check that it works correctly:
 $ ./primenet.py -d -t 0
 
 If everything is right, you should have a non empty worktodo.ini file and you can launch Mlucas.
@@ -78,3 +80,24 @@ $ sudo systemctl start primenet
 $ sudo systemctl start mlucas
 Then you can see the status of the script and its output:
 $ sudo systemctl status primenet
+
+If you created several working directory (for example, one per core), then, you can create only one systemd unit file using the @ to match the variable part.
+Supose you have created several run0, run1, run2... directories, create a /etc/systemd/system/primenet@.service file, and use %I inside to match the variable part like this:
+-------------------------
+[Unit]
+Description=MLucas GIMPS primenet
+After=network.target
+
+[Service]
+WorkingDirectory=/home/pi/mlucas/run%I
+ExecStart=/home/pi/mlucas/primenet.py -d
+Type=simple
+User=pi
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+-------------------------
+Then, you can control the job using the following commands:
+$ systemctl start primenet@0 primenet@1 primenet@2...
+The same applies to mlucas unit file.
