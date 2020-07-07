@@ -1,7 +1,7 @@
 primenet.py:
 To get assignment and send results, you can use primenet.py python script.
 
-Note: primenet.py should support python versions from 2.7 to 3.9.
+Note: primenet.py should support python versions from 2.6 to 3.9.
 
 primenet.py should be run in the same directory as Mlucas binary and they both work together like this:
 - primenet.py will get new assignments if necessary and append to worktodo.ini file
