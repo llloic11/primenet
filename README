@@ -7,7 +7,7 @@ and then reinvoke in periodic-update mode to automatically fetch work from the P
 report the status of currently-in-progress assignments to the server, which you can view in a convenient dashboard form via
 login to the server and clicking Account/Team Info --> My Account --> CPUs. (Or directly via URL: https://www.mersenne.org/cpus/)
 
-Note: primenet.py should support python versions from 2.7 to 3.9.
+Note: primenet.py should support python versions from 2.6 to 3.9.
 
 primenet.py should be run in the same directory as Mlucas binary and they both work together like this:
 o primenet.py will get new assignments if necessary and append to worktodo.ini file
@@ -15,10 +15,11 @@ o Mlucas reads the worktodo.ini file and runs the first assignment
 o Mlucas outputs the results in results.txt file and remove the first line for worktodo.ini when done
 o primenet.py sends the results from results.txt and place them in results_send.txt to not send them twice.
 
-To use this feature, you have to launch primenet.py with --register option at least once:
+To register your computer, you have to launch primenet.py with --register option at least once:
 	$ ./primenet.py --register --username [uid] --password [pwd]
 Currently, only the hostname is automatically detected, if you want to give hardware details from your computer, you can add the corresponding options like this (this is correct for a RaspberryPi4 2GB):
 	$ ./primenet.py --register --cpu_model "ARM Cortex A-72" --features "asimd" --frequency "1500" --L1 32 --L2 512 --memory 2000 --np 4 --hp 0
+You can see those informations by clicking on the corresponding CPU in the cpus page on mersenne.org (https://www.mersenne.org/cpus/).
 
 primenet.py saves command-line options in the local.ini file, so that you only have to give them once.
 So once you've done the initial computer-registration step, you don't need to repeat your username and password in
