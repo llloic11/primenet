@@ -35,10 +35,9 @@ running in background (daemon) mode, in which case invoking the script using 'no
 
 If everything is right, the result should be a non-empty worktodo.ini file and you can launch Mlucas.
 
-Then, if you have an always-on or even occasionally-on internet connection, you can run primenet.py as a daemon so that worktodo and result are automatically updated and progress regularly send to mersenne.org.
-
-It is enough to launch:
-$ ./primenet.py -d
+Then, if you have an always-on or even occasionally-on internet connection, you can run primenet.py as a daemon so that worktodo and result are automatically updated and progress regularly send to mersenne.org. The command line to use is the following:
+	$ ./primenet.py -d
+Use whatever method is the best for you to run a daemon, like nohup. If you don't know how to do, you should try the systemd method described below.
 
 Several options can be usefull to adapt the primenet.py behavior:
 o -T to chose the worktype (double-check LL by default)
