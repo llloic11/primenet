@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Automatic assignment handler for Mlucas using manual testing forms at mersenne.org
-
+# Automatic assignment handler for Mlucas.
+# This handles LL and PRP testing (first-time and double-check), i.e. all the worktypes supported by the program.
 # EWM: adapted from https://github.com/MarkRose/primetools/blob/master/mfloop.py by teknohog and Mark Rose, with help rom Gord Palameta.
+# 2020: support for computer registration and assignment-progress via direct Primenet-v5-API calls by Loïc Le Loarer <loic@le-loarer.org>.
 
-# This handles LL and PRP testing (first-time and double-check).
-
-# This version can run in parallel with Mlucas, as it uses lockfiles to avoid conflicts when updating files.
+# This script is intended to be run alongside Mlucas - use it to register your computer (if you've not previously done so)
+# and then reinvoke in periodic-update mode to automatically fetch work from the Primenet server, report latest results and
+# report the status of currently-in-progress assignments to the server, which you can view in a convenient dashboard form via
+# login to the server and clicking Account/Team Info --> My Account --> CPUs. (Or directly via URL: https://www.mersenne.org/cpus/)
 
 ################################################################################
 #                                                                              #
@@ -344,7 +346,7 @@ def register_instance(guid):
 	hardware_id = sha256(options.cpu_model.encode("utf-8")).hexdigest()[:32] # similar as mprime
 	args = primenet_v5_bargs.copy()
 	args["t"] = "uc"					# update compute command
-	args["a"] = "Linux64,Mlucas,v19"	# 
+	args["a"] = "Linux64,Mlucas,v19"	#
 	if config.has_option("primenet", "sw_version"):
 			args["a"] = config.get("primenet", "sw_version")
 	args["wg"] = ""						# only filled on Windows by mprime
@@ -531,7 +533,7 @@ def send_progress(assignment_id, is_prp, percent, time_left, retry_count=0):
 	# d= when the client is expected to check in again (in seconds ... )
 	args["d"] = options.timeout if options.timeout else 24*3600
 	# e= the ETA of completion in seconds, if unknown, just put 1 week
-	args["e"] = time_left if time_left is not None else 7*24*3600 
+	args["e"] = time_left if time_left is not None else 7*24*3600
 	# c= the worker thread of the machine ... always sets = 0 for now, elaborate later if desired
 	args["c"] = 0
 	# stage= LL in this case, although an LL test may be doing TF or P-1 work first so it's possible to be something besides LL
