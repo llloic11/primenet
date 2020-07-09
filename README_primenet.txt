@@ -19,7 +19,7 @@ To register your computer, you have to launch primenet.py with --register option
 	$ ./primenet.py --register --username [uid] --password [pwd]
 Currently, only the hostname is automatically detected, if you want to give hardware details from your computer, you can add the corresponding options like this (this is correct for a RaspberryPi4 2GB):
 	$ ./primenet.py --register --cpu_model "ARM Cortex A-72" --features "asimd" --frequency "1500" --L1 32 --L2 512 --memory 2000 --np 4 --hp 0
-You can see those informations by clicking on the corresponding CPU in the cpus page on mersenne.org (https://www.mersenne.org/cpus/).
+You can see the resulting details about the registered computers online by clicking on the corresponding CPU in the cpus page on mersenne.org (https://www.mersenne.org/cpus/).
 
 primenet.py saves command-line options in the local.ini file, so that you only have to give them once.
 So once you've done the initial computer-registration step, you don't need to repeat your username and password in
@@ -35,9 +35,9 @@ running in background (daemon) mode, in which case invoking the script using 'no
 
 If everything is right, the result should be a non-empty worktodo.ini file and you can launch Mlucas.
 
-Then, if you have an always-on or even occasionally-on internet connection, you can run primenet.py as a daemon so that worktodo and result are automatically updated and progress regularly send to mersenne.org. The command line to use is the following:
-	$ ./primenet.py -d
-Use whatever method is the best for you to run a daemon, like nohup. If you don't know how to do, you should try the systemd method described below.
+Then, if you have an always-on or even occasionally-on internet connection, you can run primenet.py as a daemon so that worktodo and result are automatically updated and progress regularly send to mersenne.org. One easy way to run command in daemon mode is to use nohup like this:
+	$ nohup ./primenet.py -d &
+But you can use whatever method is the best for you to run a daemon. Beside nohup, the systemd method is described below.
 
 Several options can be usefull to adapt the primenet.py behavior:
 o -T to chose the worktype (double-check LL by default)
@@ -111,4 +111,4 @@ Then, you can control the job using the following commands:
 	$ systemctl start primenet@0 primenet@1 primenet@2...
 The same applies to mlucas unit file.
 
-This version dated 7 July 2020.
+This version dated 8 July 2020.
