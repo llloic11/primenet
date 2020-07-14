@@ -821,8 +821,9 @@ sendlimit = 3000 # TODO: enforce this limit
 primenet_cj = cookiejar.CookieJar()
 primenet = build_opener(HTTPCookieProcessor(primenet_cj))
 
-# If debug is requested
-
+# If debug is requested, try importinh urllib_debug.
+# Disabled debug if import is failing. This allows not distribuing urllib_debug module
+# when it is not useful.
 if options.debug > 1:
 	# if urllib_debug is not present, don't try to activate the debugging
 	try:
