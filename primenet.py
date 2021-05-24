@@ -491,7 +491,7 @@ def get_progress_assignment(task):
 	found = workpattern.search(task)
 	if not found:
 		# TODO: test this error
-		debug_print("ERROR: Unable to extract valid Primenet assignment ID from entry in " + workfile + ": " + str(tasks[0]), file=sys.stderr)
+		debug_print("ERROR: Unable to extract valid Primenet assignment ID from entry in " + workfile + ": " + str(task), file=sys.stderr)
 		return
 	assignment_id = found.group(2)
 	is_prp = found.group(1) == "PRP"
