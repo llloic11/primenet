@@ -29,6 +29,10 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 #        python -m pip install flake8 pytest
+    - name: Test with run_test script
+      run: |
+        cd tests
+        ./run_tests.sh python
 #    - name: Lint with flake8
 #      run: |
 #        # stop the build if there are Python syntax errors or undefined names
@@ -38,3 +42,4 @@ jobs:
 #    - name: Test with pytest
 #      run: |
 #        pytest
+
